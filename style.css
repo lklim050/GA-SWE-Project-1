@@ -1,7 +1,7 @@
 :root {
   --board-color: #69c46e;
-  --card-width: 120px;
-  --card-height: 180px;
+  --card-width: 110px;
+  --card-height: 175px;
 }
 
 body {
@@ -127,7 +127,26 @@ body {
   background: rgba(0, 0, 0, 0.7);
   padding: 10px;
   border-radius: 5px;
-  margin-bottom: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   width: 95%;
   text-align: center;
+}
+
+.active {
+  border: 3px solid #ffd700;
+  background-color: #fff;
+  z-index: 10; /* Ensures it sits on top of everything else */
+}
+
+/* Styling the text inside the card */
+.card-content h4 {
+  margin: 5px 0;
+  color: #b71c1c; /* Dark red for the card name */
+  text-decoration: underline;
+}
+
+.card-content p {
+  font-size: 0.8rem;
+  color: #333;
 }
