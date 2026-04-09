@@ -1,0 +1,133 @@
+:root {
+  --board-color: #69c46e;
+  --card-width: 120px;
+  --card-height: 180px;
+}
+
+body {
+  background-color: #1a1a1a;
+  color: white;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.game-container {
+  width: 1000px;
+  max-width: 1200px;
+  height: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.zone {
+  border: 2px solid rgba(255, 255, 255);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+/* Specific Row Styling */
+.opponent-hand,
+.my-hand {
+  height: 15%;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.middle-row {
+  display: flex;
+  flex: 1; /* Takes up remaining middle space */
+  gap: 15px;
+}
+
+.play-area {
+  flex: 5; /* Play area is wider */
+  flex-direction: column;
+  background: var(--board-color);
+  position: relative;
+}
+
+.discard-pile,
+.deck-pile {
+  flex: 1;
+  flex-direction: column;
+}
+
+/* Character Styling */
+.player-face {
+  width: 120px;
+  height: 120px;
+  background: lightcoral;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 50px;
+}
+
+.enemy-face {
+  width: 120px;
+  height: 120px;
+  background: darkolivegreen;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 50px;
+}
+
+/* Card Styling */
+.card,
+.card-back,
+.card-slot {
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: 5px;
+  border: 1px solid #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.card {
+  background: white;
+  color: black;
+  flex-direction: column;
+  margin-right: 5px;
+}
+.card-back {
+  background: orangered;
+  color: white;
+  border: 2px solid white;
+  margin-right: 5px;
+}
+.card-slot {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px dashed whitesmoke;
+}
+
+.drawn {
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+#dialogue-box {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  width: 95%;
+  text-align: center;
+}
