@@ -1,0 +1,52 @@
+
+Features and flow
+
+0. Creations
+	a. deck Creations - 20 cards containing the following types
+		i. Attack: 10cards (does -HP on enemy based on ATK stats)
+		ii. Dodged: 5cards (Used when Attack card is played to prevent -HP)
+		iii. Heal: 3cards (+3HP)
+		iv. Critical: 2cards (cannot be dodged)
+	b. characters creation based on stats difference
+		i. Warrior, HP: 12, ATK: 2-4, SPD: 1
+		ii. Mage, HP: 11, ATK: 2-5, SPD: 2
+		iii. Ninja, HP: 10, ATK: 2-6, SPD: 3
+	c. deck Shuffle 
+	d. 
+
+
+1. Initializing
+	a. check player chosen character
+	b. deckShuffle() 
+	c. deal cards (start hand 3, max 5)
+	d. check player turn based on speed stats
+
+	
+2. Player turn
+	a. Draw 1 card
+	b. Play 1 card 
+		i. Attack card: 
+			> only once per turn
+			> -HP (enemy) based on character atk point
+			> can be resolved by enemy dodge card
+		ii. Dodged card:
+			> only be used during the other player turn
+			> only be used to resolve Attack card
+			> no -HP from Attack card
+		iii. Heal card:
+			> recover +3HP (player)
+		iv. Critical card:
+			> only once per turn
+			> -HP (enemy) based on character max atk point
+			> cannot be resolved by enemy dodge card
+	c. End turn
+	d. Switch turn
+
+3. Check and Update
+	a. Check Winner when one of the player HP reaches 0
+	b. Update result and message after every card resolved
+	c. Update discard pile information
+	d. Check player turn and switch
+	e. Check if deck is empty, shuffle back remaining cards from discard pile and create new content
+
+4. Reset Button 
