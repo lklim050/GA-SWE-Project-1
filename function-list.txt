@@ -1,6 +1,7 @@
 My library of functions for this project for reference.
 
-// Create a deck based on card types and their quantities
+// Create a deck based on card types and their quantities 
+// and assign unique IDs to each card
 const createDeck = () => {
   deck = [];
   for (let i = 0; i < cardTypes.length; i++) {
@@ -9,9 +10,10 @@ const createDeck = () => {
       deck.push(card);
     }
   }
+  for (let i = 0; i < deck.length; i++) {
+    deck[i].id = i;
+  }
 };
-
-
 
 // Shuffle the deck using Fisher-Yates algorithm
 const shuffleDeck = (deck) => {
@@ -28,6 +30,91 @@ function delay(ms) {
 }
 
  await delay(3000); // include this into any async function
+
+// Function to update the dialogue timer visually
+const startVisualTimer = (seconds) => {
+  let timeLeft = seconds;
+  const timerElement = document.getElementById("timer-count");
+
+  const interval = setInterval(() => {
+    timeLeft--;
+    if (timerElement) timerElement.innerText = timeLeft;
+    
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+    }
+  }, 1000);
+
+  return interval; // Return so we can stop it if the player clicks early
+};
+
+// insert this into the playerTurn function
+const playerTurnCountDown = async function () {
+  let turnTime = 15; // 15 seconds to move
+  updateDialogue(
+    `Please make a move... (<span id="timer-count">${turnTime}</span>s)`,
+  );
+
+  const handZone = document.getElementById("player-hand-container");
+
+  const visualClock = startVisualTimer(turnTime); // start countdown
+
+  // Promise.race to wait either for click or timeout
+  const result = await Promise.race([
+    waitForClick(handZone),
+    delay(turnTime * 1000).then(() => "TIMEOUT"),
+  ]);
+
+  clearInterval(visualClock); // Stop the clock as soon as the race ends
+
+  if (result === "TIMEOUT") {
+    updateDialogue("Time's up! You skipped your turn.");
+    // Add logic here to auto-discard or end turn
+    return "skipped";
+  } else {
+    const clickedCard = result;
+    updateDialogue(`You played ${clickedCard.innerText}!`);
+    // playCard(clickedCard); // to implement later
+    return "played";
+  }
+};
+
+
+
+
+// Create a constructor Class for the player and enemy characters
+const Character = class {
+  constructor(name = "character", ATK = 1, HP = 5, SPD = 1) {
+    this.name = name;
+    this.ATK = ATK;
+    this.HP = HP;
+    this.SPD = SPD;
+  }
+};
+const Warrior = new Character("Warrior", 4, 14, 2);
+const Minion = new Character("Minion", 1, 6, 1);
+const Mage = new Character("Mage", 5, 12, 3);
+const Ninja = new Character("Ninja", 6, 10, 4);
+const DemonKing = new Character("Demon-King", 9, 15, 0);
+
+// Use dynamic rendering to create hand card elements
+function renderHandCard(cardData) {
+  // create div element with className and data-id attribute
+  const cardElement = document.createElement("div");
+
+  cardElement.className = "my card";
+
+  cardElement.setAttribute("data-id", cardData.id);
+
+  cardElement.innerHTML = `
+    <div class="card-content">
+      <h4>${cardData.Type}</h4>
+    </div>`;
+
+  // Find the container and append cardElemnent
+  const container = document.getElementById("player-hand-container");
+  container.appendChild(cardElement);
+}
 
 
 

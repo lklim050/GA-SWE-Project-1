@@ -33,13 +33,6 @@ body {
   padding: 10px;
 }
 
-/* Specific Row Styling */
-.opponent-hand,
-.my-hand {
-  height: 15%;
-  background: rgba(255, 255, 255, 0.05);
-}
-
 .middle-row {
   display: flex;
   flex: 1; /* Takes up remaining middle space */
@@ -69,7 +62,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 50px;
+  margin-right: 0;
 }
 
 .enemy-face {
@@ -81,7 +74,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 50px;
+  margin-right: 0;
 }
 
 /* Card Styling */
@@ -104,8 +97,10 @@ body {
   background: white;
   color: black;
   flex-direction: column;
-  margin-right: 5px;
+  flex-basis: 110px;
+  /* margin-right: 5 px; */
 }
+
 .card-back {
   background: orangered;
   color: white;
@@ -135,7 +130,6 @@ body {
 
 .active {
   border: 3px solid #ffd700;
-  background-color: #fff;
   z-index: 10; /* Ensures it sits on top of everything else */
 }
 
@@ -151,7 +145,21 @@ body {
   color: #333;
 }
 
-.hidden {
-  /* display: none !important; */
-  visibility: hidden;
+/* Hand containers: layout faces and cards in a row */
+#player-hand-container,
+#enemy-hand-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* keep face and cards on the left */
+  gap: 10px;
+  height: 140px; /* Set this lower than your --card-height */
+  max-height: 140px; /* Forces the height to NEVER grow */
+  overflow: visible; /* Allows cards to overflow outside the hand container */
+  padding: 0 10px;
 }
+
+/* #player-hand-container:empty::before {
+  content: "No cards in hand. Draw to start!";
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+} */
