@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link href="style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="game-container">
+      <div class="zone enemy-hand" id="enemy-hand-container">
+        <div class="enemy-face">"_"</div>
+      </div>
+
+      <div class="zone enemy">
+        <div class="enemy-text">Enemy, Class: Warrior, HP: 5/5, ATK: 1</div>
+      </div>
+
+      <div class="middle-row">
+        <div class="zone discard-pile">
+          <h3>Discard</h3>
+          <div class="card-slot" id="discard-top">Empty</div>
+        </div>
+
+        <div class="zone play-area">
+          <div class="card active enemy">
+            <div class="card-content">
+              <h4>ATTACK!</h4>
+              <p>Deal Damage to HP</p>
+            </div>
+          </div>
+          <div id="dialogue-box">Game Started: Player X's Turn</div>
+          <div class="card active player">
+            <div class="card-content">
+              <h4>ATTACK!</h4>
+              <p>Deal Damage to HP</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="zone deck-pile">
+          <h3>Deck</h3>
+          <div class="card-back" id="draw-deck">10 Cards</div>
+        </div>
+      </div>
+
+      <div class="zone player">
+        <div class="player-text">Player, Class: Warrior, HP: 5/5, ATK: 1</div>
+      </div>
+
+      <div class="zone player-hand" id="player-hand-container">
+        <div class="player-face">^_^</div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

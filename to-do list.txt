@@ -1,0 +1,17 @@
+1. Create a html gameboard
+2. Create a deck of cards with different types and quantities
+3. Shuffle the deck
+4. Deal cards to the player and enemy with dynamic rendering
+5. Create a dialogue system to display game messages
+6. Create a constructor Class for the player and enemy characters
+7. Load character information to html elements
+8. Function to check first turn based on character SPD
+9. Implement delay function to simulate thinking time and loadingtime
+9. Implement timer function for player's turn
+10. Function to render an "End Turn" button and wait for its click
+11. Function to play a card when clicked
+12. Function to resolve each card's effect on the player and enemy characters
+
+8. Function to start a visual countdown timer
+9. Function to wait for a click on the player's hand
+10. Function to render an "End Turn" button and wait for its click
