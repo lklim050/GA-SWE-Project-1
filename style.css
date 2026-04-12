@@ -97,7 +97,7 @@ body {
   background: white;
   color: black;
   flex-direction: column;
-  flex-basis: 110px;
+  /* flex-basis: 110px; */
   /* margin-right: 5 px; */
 }
 
@@ -128,9 +128,11 @@ body {
   text-align: center;
 }
 
-.active {
+.active-player {
   border: 3px solid #ffd700;
   z-index: 10; /* Ensures it sits on top of everything else */
+  /* display: flex;
+  flex-direction: row; */
 }
 
 /* Styling the text inside the card */

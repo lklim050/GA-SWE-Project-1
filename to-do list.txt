@@ -7,11 +7,22 @@
 7. Load character information to html elements
 8. Function to check first turn based on character SPD
 9. Implement delay function to simulate thinking time and loadingtime
-9. Implement timer function for player's turn
-10. Function to render an "End Turn" button and wait for its click
-11. Function to play a card when clicked
-12. Function to resolve each card's effect on the player and enemy characters
+10. Implement timer function for player's turn
+11. Function to render an "End Turn" button and wait for its click
+12. Function to play a card when clicked
+13. Function to resolve each card's effect on the player and enemy characters
+14. Function to restrict the use of certain card types to once per turn
+15. Function that remove html card element from hand during card played
+16. Function that placed card into active zone after card played
+17. Function that switch turn to enemy after player turn end, and vice versa    
+18. Function for enemy AI to resolve card from hand
+19. Function that remove html card element from enemy hand during card played
+20. Function that placed card into enemy active zone after card played
+21. Function that reset the gameboard and start a new game
 
-8. Function to start a visual countdown timer
-9. Function to wait for a click on the player's hand
-10. Function to render an "End Turn" button and wait for its click
+
+//16. Function that move card from active zone to discard pile after turn end
+//17. Function that record card in discard pile for later reshuffling
+
+
+
