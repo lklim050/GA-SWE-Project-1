@@ -16,6 +16,7 @@ body {
 }
 
 .game-container {
+  perspective: 1200px; /* Adds depth for 3D effects */
   width: 1000px;
   max-width: 1200px;
   height: 900px;
@@ -97,7 +98,7 @@ body {
   background: white;
   color: black;
   flex-direction: column;
-  flex-basis: 110px;
+  /* flex-basis: 110px; */
   /* margin-right: 5 px; */
 }
 
@@ -112,11 +113,16 @@ body {
   border: 2px dashed whitesmoke;
 }
 
-.drawn {
+#draw-deck {
+  font-size: 1.2rem;
+  color: white;
+}
+
+/* Not yet implemented, 
   align-items: center;
   justify-content: center;
   margin-left: auto;
-}
+} */
 
 #dialogue-box {
   background: rgba(0, 0, 0, 0.7);
@@ -128,9 +134,11 @@ body {
   text-align: center;
 }
 
-.active {
+.active-player {
   border: 3px solid #ffd700;
   z-index: 10; /* Ensures it sits on top of everything else */
+  /* display: flex;
+  flex-direction: row; */
 }
 
 /* Styling the text inside the card */
@@ -163,3 +171,39 @@ body {
   color: rgba(255, 255, 255, 0.3);
   font-style: italic;
 } */
+
+/* this is extra idea of making the board 3D. */
+.middle-row,
+#enemy-hand-container,
+#player-hand-container,
+.zone.enemy,
+.zone.player {
+  transform: rotateX(20deg);
+  transform-style: preserve-3d;
+}
+/* Make the hands feel closer/further */
+
+#enemy-hand-container {
+  transform: rotateX(20deg) scale(0.9) translateY(10px);
+  opacity: 0.9; /* Further away things are often slightly dimmer */
+}
+
+#player-hand-container {
+  transform: rotateX(10deg) scale(1.05) translateY(-10px);
+  z-index: 10; /* Ensures your hand is always 'on top' visually */
+}
+
+/* Give your cards that 'Pop' when they are in the hand */
+.card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover {
+  /* This makes the card stand up straight when you hover over it */
+  transform: rotateX(-10deg) translateZ(50px) scale(1.1);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}

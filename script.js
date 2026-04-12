@@ -1,7 +1,7 @@
 // -----------------Constants and Variables------------------------
 // Allows future type additions and quantity changes
 const cardTypes = ["ATTACK", "DODGED", "HEAL", "CRITICAL"];
-const cardTypesQuantity = [8, 0, 4, 4];
+const cardTypesQuantity = [8, 8, 0, 0];
 
 let playerHand = [];
 let enemyHand = [];
@@ -14,6 +14,7 @@ let winner = false;
 const dialogue = document.querySelector("#dialogue-box");
 const playerText = document.querySelector(".player-text");
 const enemyText = document.querySelector(".enemy-text");
+const deckCount = document.querySelector("#draw-deck");
 // const handContainer = document.getElementById("player-hand-container");
 
 // ------------------------Classes---------------------------------
@@ -125,6 +126,7 @@ const createDeck = () => {
   for (let i = 0; i < deck.length; i++) {
     deck[i].id = i;
   }
+  deckCount.innerText = deck.length + " cards left";
 };
 
 // Shuffling Deck
@@ -195,12 +197,14 @@ function playerDraw() {
   const drawnCard = deck.pop();
   playerHand.push(drawnCard);
   renderHandCard(drawnCard);
+  deckCount.innerText = deck.length + " cards left";
 }
 
 function enemyDraw() {
   const drawnCard = deck.pop();
   enemyHand.push(drawnCard);
   renderEnemyHandCard(drawnCard);
+  deckCount.innerText = deck.length + " cards left";
 }
 
 const checkFirstTurn = (player, enemy) => {
@@ -218,6 +222,9 @@ const checkFirstTurn = (player, enemy) => {
 const updateDialogue = (message) => {
   document.querySelector("#dialogue-box").innerHTML = message;
 };
+
+// Pause function
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Delay function
 function delay(ms) {
@@ -258,8 +265,65 @@ const waitForClick = (element) => {
       }
     };
     // Attach the listener to the parent container
-    // renderEndTurnButton();
     element.addEventListener("click", onClick);
+  });
+};
+
+const waitForReaction = (timeoutMs) => {
+  return new Promise((resolve) => {
+    let timeLeft = timeoutMs / 1000;
+    const playerHandUI = document.querySelector("#player-hand-container");
+
+    // 1. Select ALL cards in hand
+    const allCardsUI = Array.from(playerHandUI.querySelectorAll(".card"));
+
+    // 2. Filter for ALL Missed cards
+    const dodgedCardsUI = allCardsUI.filter((el) =>
+      el.innerText.includes("DODGED"),
+    );
+
+    // If you have no missed cards, fail immediately
+    if (dodgedCardsUI.length === 0) {
+      resolve(null);
+      return;
+    }
+
+    updateDialogue(`Incoming Attack! Play DODGED? (${timeLeft}s)`);
+
+    const countdownInterval = setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft > 0) {
+        updateDialogue(`Incoming Attack! Play DODGED? (${timeLeft}s)`);
+      }
+    }, 1000);
+
+    // This function will run regardless of WHICH dodged card is clicked
+    const onClick = (event) => {
+      const clickedCard = event.currentTarget;
+      cleanup();
+      // We resolve with the specific ID of the card clicked
+      // so we know which one to remove from the array later
+      resolve({ status: "DODGED_PLAYED", cardId: clickedCard.dataset.id });
+    };
+
+    const cleanup = () => {
+      clearInterval(countdownInterval);
+      clearTimeout(timer);
+      // Remove the listener from ALL dodged cards
+      dodgedCardsUI.forEach((card) => {
+        card.removeEventListener("click", onClick);
+      });
+    };
+
+    // 3. Attach the listener to EVERY dodged card
+    dodgedCardsUI.forEach((card) => {
+      card.addEventListener("click", onClick);
+    });
+
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve(null);
+    }, timeoutMs);
   });
 };
 
@@ -294,20 +358,57 @@ const playerTurnCountDown = async function () {
   return result;
 };
 
-const resolveCardEffect = (card) => {
+const resolveCardEffect = async (card) => {
   switch (card.type) {
     case "ATTACK":
-      // Implement attack logic
       if (turn.includes("Player")) {
-        enemy.attack(player.ATK);
-        loadEnemyData(enemy);
-        updateDialogue(`You attacked the enemy for ${player.ATK} damage!`);
+        updateDialogue(`You are aiming at the enemy...`);
+        await pause(2000);
+
+        // Enemy DODGED card check
+        const dodgedIndex = enemyHand.findIndex((c) => c.type === "DODGED");
+
+        if (dodgedIndex !== -1) {
+          // Enemy avoids the damage
+          const dodgedCard = enemyHand[dodgedIndex];
+          updateDialogue(`Enemy played DODGED! Your attack was blocked.`);
+          console.log("enemy played dodged card successfully"); // for test, TBD
+          enemyHand.splice(dodgedIndex, 1);
+          // removeCardFromUI(dodgedCard.id);
+          console.log(enemyHand); // for test, TBD
+          await delay(3000);
+        } else {
+          // No reaction, proceed with damage
+          enemy.attack(player.ATK);
+          loadEnemyData(enemy);
+          updateDialogue(`You attacked the enemy for ${player.ATK} damage!`);
+        }
       } else {
-        player.attack(enemy.ATK);
-        loadPlayerData(player);
-        updateDialogue(`The enemy attacked you for ${enemy.ATK} damage!`);
+        // Enemy Attacking Player logic, add player reaction for DODGED card
+        updateDialogue("Incoming Attack! Brace yourself...");
+
+        // 1. Give the player 10 seconds to click their DODGED card
+        const reaction = await waitForReaction(10000);
+
+        if (reaction && reaction.status === "DODGED_PLAYED") {
+          updateDialogue("You played DODGED! Damage avoided.");
+
+          // Use the specific ID from the click to remove the correct card
+          const index = playerHand.findIndex((c) => c.id == reaction.cardId);
+          if (index !== -1) {
+            playerHand.splice(index, 1);
+          }
+
+          // Remove card from player hand and put onto active zone
+          // renderPlayerHand();
+        } else {
+          player.attack(enemy.ATK);
+          loadPlayerData(player);
+          updateDialogue(`The enemy hit you for ${enemy.ATK} damage!`);
+        }
+
+        break;
       }
-      break;
     case "DODGED":
       // Implement dodge logic
       break;
@@ -427,8 +528,13 @@ const init = async () => {
 
 const playerTurn = async function () {
   console.log(`Turn Start: ${turn}`);
-  document.querySelector(".zone.player-hand").style.pointerEvents = "auto"; // Enable clicking on player's hand
-  document.querySelector(".zone.player-hand").style.border = "3px solid yellow"; // Optional: visually indicate it's active
+
+  // Visually indicate turn change by borders
+  document.querySelector(".zone.player-hand").style.border = "8px solid yellow";
+  document.querySelector(".zone.enemy-hand").style.border = "3px dashed grey";
+  document.querySelector(".player-face").style.border = "5px solid yellow";
+  document.querySelector(".enemy-face").style.border = "3px dashed grey";
+
   if (deck.length !== 0) {
     playerDraw();
   } else {
@@ -476,7 +582,7 @@ const playerTurn = async function () {
 
       // 3. Success! Now play the card and flip the booleans
       updateDialogue(`You played ${cardData.name}!`);
-      resolveCardEffect(cardData);
+      await resolveCardEffect(cardData);
 
       if (cardData.type === "ATTACK") {
         isAttackCardPlayed = true;
@@ -486,7 +592,6 @@ const playerTurn = async function () {
         isCriticalCardPlayed = true;
         console.log("Critical switch flipped to TRUE"); // for test, TBD
       }
-      await delay(1000); // Wait for animation/effect to finish
 
       // 4. Remove the card from hand and place on active zone
       const cardIndex = playerHand.findIndex((c) => c.id == cardData.id);
@@ -525,11 +630,18 @@ const playerTurn = async function () {
   updateDialogue(`It is ${turn}'s turn.`);
   console.log(`It is ${turn}'s turn.`); // for test, TBD
 
-  enemyTurn(); // Trigger your NPC turn here
+  enemyTurn();
 };
 
 const enemyTurn = async function () {
   console.log(`Turn Start: ${turn}`);
+
+  // Visually indicate turn change by borders
+  document.querySelector(".zone.player-hand").style.border = "3px dashed grey";
+  document.querySelector(".zone.enemy-hand").style.border = "8px solid yellow";
+  document.querySelector(".player-face").style.border = "3px dashed grey";
+  document.querySelector(".enemy-face").style.border = "5px solid yellow";
+
   if (deck.length !== 0) {
     enemyDraw();
   } else {
@@ -557,7 +669,7 @@ const enemyTurn = async function () {
     ); // for test, TBD
     updateDialogue(`Enemy plays ${enemyCardPlayed.type}!`);
     // Trigger the attack logic
-    resolveCardEffect(enemyCardPlayed);
+    await resolveCardEffect(enemyCardPlayed);
 
     // IMPORTANT: Remove card from enemyHand so they don't have infinite attacks
     enemyHand.splice(attackIndex, 1);
@@ -608,7 +720,7 @@ const enemyTurn = async function () {
     ); // for test, TBD
     updateDialogue(`Enemy plays ${enemyCardPlayed.type}!`);
     // Trigger the heal logic
-    resolveCardEffect(enemyCardPlayed);
+    await resolveCardEffect(enemyCardPlayed);
 
     // IMPORTANT: Remove card from enemyHand so they don't have infinite attacks
     enemyHand.splice(healIndex, 1);
@@ -659,7 +771,7 @@ const enemyTurn = async function () {
     ); // for test, TBD
     updateDialogue(`Enemy plays ${enemyCardPlayed.type}!`);
     // Trigger the critical logic
-    resolveCardEffect(enemyCardPlayed);
+    await resolveCardEffect(enemyCardPlayed);
 
     // IMPORTANT: Remove card from enemyHand so they don't have infinite attacks
     enemyHand.splice(criticalIndex, 1);

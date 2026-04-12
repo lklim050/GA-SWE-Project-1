@@ -112,11 +112,16 @@ body {
   border: 2px dashed whitesmoke;
 }
 
-.drawn {
+#draw-deck {
+  font-size: 1.2rem;
+  color: white;
+}
+
+/* Not yet implemented, 
   align-items: center;
   justify-content: center;
   margin-left: auto;
-}
+} */
 
 #dialogue-box {
   background: rgba(0, 0, 0, 0.7);
