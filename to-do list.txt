@@ -19,8 +19,9 @@
 19. Function that remove html card element from enemy hand during card played
 20. Function that placed card into enemy active zone after card played
 21. Function that reset the gameboard and start a new game
-22. HTML and style line for active player's turn indicator
+22. Function that updates HTML and style line for active player's turn indicator
 23. HTML and style line for deck count indicator
+24. Implement dodged restrictions during player turn
 
 
 //16. Function that move card from active zone to discard pile after turn end
