@@ -1,7 +1,7 @@
 // -----------------Constants and Variables------------------------
 // Allows future type additions and quantity changes
 const cardTypes = ["ATTACK", "DODGED", "HEAL", "CRITICAL"];
-const cardTypesQuantity = [4, 4, 4, 4];
+const cardTypesQuantity = [8, 4, 4, 4];
 
 let playerHand = [];
 let enemyHand = [];
@@ -9,7 +9,7 @@ let player;
 let enemy;
 let deck = [];
 let turn = "";
-let winner = false;
+let isGameOver = false;
 
 const dialogue = document.querySelector("#dialogue-box");
 const playerText = document.querySelector(".player-text");
@@ -235,6 +235,7 @@ const checkFirstTurnWithCardDealt = async (player, enemy) => {
     await delay(1000);
     enemyTurn();
   }
+  log(); //Deck content check only, TBD
 };
 
 // Visual Turn Indicator by border highlight
@@ -281,10 +282,12 @@ function delay(ms) {
 
 // Timer function
 const startVisualTimer = (seconds) => {
+  // below function would run down second and update dialogue
   let timeLeft = seconds;
   const timerElement = document.querySelector("#timer-count");
 
   const interval = setInterval(() => {
+    // countdown starts here
     timeLeft--;
     if (timerElement) timerElement.innerText = timeLeft;
 
@@ -396,10 +399,20 @@ const playerTurnCountDown = async function () {
     });
   });
 
+  const waitForGameOver = new Promise((resolve) => {
+    const checkId = setInterval(() => {
+      if (isGameOver) {
+        clearInterval(checkId);
+        resolve("GAME_OVER");
+      }
+    }, 100); // Check every 100ms
+  });
+
   // Promise.race to wait either for click or timeout
   const result = await Promise.race([
     waitForClick(handZone),
     waitBtnClick,
+    waitForGameOver,
     delay(turnTime * 1000).then(() => "TIMEOUT"),
   ]);
 
@@ -418,8 +431,14 @@ const resolveCardEffect = async (card) => {
 
         // Enemy DODGED card check
         const dodgedIndex = enemyHand.findIndex((c) => c.type === "DODGED");
-
+        const cardData = enemyHand[dodgedIndex];
+        console.log("What is dodgedIndex? ", dodgedIndex); // for test, TBD
         if (dodgedIndex !== -1) {
+          //Append card from enemy hand to active zone
+          const dodgedCardElement = document.querySelector(
+            `[data-id="${cardData.id}"]`,
+          );
+          dodgedCardOntoActiveZone(dodgedCardElement, turn);
           // Enemy avoids the damage
           const dodgedCard = enemyHand[dodgedIndex];
           updateDialogue(`Enemy played DODGED! Your attack was blocked.`);
@@ -432,7 +451,11 @@ const resolveCardEffect = async (card) => {
           // No reaction, proceed with damage
           enemy.attack(player.ATK);
           loadEnemyData(enemy);
-          updateDialogue(`You attacked the enemy for ${player.ATK} damage!`);
+          updateDialogue(
+            `No DODGED!! You attacked the enemy for ${player.ATK} damage!`,
+          );
+          await delay(3000);
+          checkWinner();
         }
       } else {
         // Enemy Attacking Player logic, add player reaction for DODGED card
@@ -442,22 +465,30 @@ const resolveCardEffect = async (card) => {
         const toPlayDodged = await waitForReaction(10000);
 
         if (toPlayDodged && toPlayDodged.status === "DODGED_PLAYED") {
-          updateDialogue("You played DODGED! Damage avoided.");
-
           // Use the specific ID from the click to remove the correct card
           const index = playerHand.findIndex(
             (c) => c.id == toPlayDodged.cardId,
           );
+          console.log("what is index? ", index); // for test, TBD
+          const cardData = playerHand[index];
+          const cardElement = document.querySelector(
+            `[data-id="${cardData.id}"]`,
+          );
+          dodgedCardOntoActiveZone(cardElement, turn);
+          // Remove from player hand array
           if (index !== -1) {
             playerHand.splice(index, 1);
           }
-
           // Remove card from player hand and put onto active zone
           // renderPlayerHand();
+
+          updateDialogue("You played DODGED! Damage avoided.");
         } else {
           player.attack(enemy.ATK);
           loadPlayerData(player);
           updateDialogue(`The enemy hit you for ${enemy.ATK} damage!`);
+          await delay(3000);
+          checkWinner();
         }
 
         break;
@@ -484,10 +515,14 @@ const resolveCardEffect = async (card) => {
         enemy.critical(player.ATK);
         loadEnemyData(enemy);
         updateDialogue(`You attacked the enemy for ${player.ATK + 2} damage!`);
+        await delay(3000);
+        checkWinner();
       } else {
         player.critical(enemy.ATK);
         loadPlayerData(player);
         updateDialogue(`The enemy attacked you for ${enemy.ATK + 2} damage!`);
+        await delay(3000);
+        checkWinner();
       }
       break;
   }
@@ -531,18 +566,28 @@ const renderResetButton = () => {
 };
 
 const cardOntoActiveZone = (cardData, turn) => {
-  console.log("to check if cardOntoActiveZone is triggered for: ", turn); // Check if this prints for Player
   const activeZone =
     turn === "Player"
       ? document.querySelector(".active-player")
       : document.querySelector(".active-enemy");
   if (activeZone && cardData) {
-    console.log("Targeting Zone:", activeZone);
-    // 1. Force a bright color so we can't miss it
-    cardData.style.border = "5px solid red";
     activeZone.appendChild(cardData);
     cardData.className =
-      turn === "Player" ? "card active-player" : "card active-enemy";
+      turn === "Player" ? "card player-active-card" : "card enemy-active-card";
+  } else {
+    console.warn("Active zone or card not found! Check your HTML structure.");
+  }
+};
+
+const dodgedCardOntoActiveZone = (cardData, turn) => {
+  const activeZone =
+    turn === "Player"
+      ? document.querySelector(".active-enemy")
+      : document.querySelector(".active-player");
+  if (activeZone && cardData) {
+    activeZone.appendChild(cardData);
+    cardData.className =
+      turn === "Player" ? "card player-active-card" : "card enemy-active-card";
   } else {
     console.warn("Active zone or card not found! Check your HTML structure.");
   }
@@ -551,10 +596,10 @@ const cardOntoActiveZone = (cardData, turn) => {
 // Initializing Game
 const init = async () => {
   updateDialogue("Initializing Data...");
-  // the following clear JS variables
+  // the following initialize JS variables
   deck = [];
   turn = "";
-  winner = false;
+  isGameOver = false;
   player = new Warrior();
   enemy = new Minion();
   // the following clear HTML elements
@@ -577,18 +622,16 @@ const init = async () => {
   await delay(2000);
 
   checkFirstTurnWithCardDealt(player, enemy);
-
-  log(); //Deck content check only, to be removed after testing
 };
 
 const playerTurn = async function () {
   console.log(`Turn Start: ${turn}`);
-
   // Visually indicate turn change by borders
   turnIndicator();
   // Draw 1 card at start of turn
   if (deck.length !== 0) {
     playerDraw();
+    console.log("check player hand: ", playerHand); // for test, TBD
   } else {
     console.log("Deck is empty, cannot draw more cards. Game Ended");
     updateDialogue("Deck is empty, cannot draw more cards. Game Ended");
@@ -606,27 +649,17 @@ const playerTurn = async function () {
   let isCriticalCardPlayed = false;
   // 2. Start the Loop
   while (!isTurnOver) {
+    // check win lose
+
     // This gives string such as "END_TURN_CLICKED", "TIMEOUT", or the clicked card element
     const outcome = await playerTurnCountDown();
 
-    // 2. Identify if it's a card (an object/element) or a string ("TIMEOUT")
-    // if (outcome && typeof outcome !== "string") {
-    //   // 1. Use the ID from the 'Ghost' to find the 'Living' element on the screen
-    //   const realCardOnScreen = document.querySelector(
-    //     `[data-id="${outcome.dataset.id}"]`,
-    //   );
-
-    //   if (realCardOnScreen) {
-    //     console.log("Found the living element. Moving now...");
-    //     cardOntoActiveZone(realCardOnScreen, "Player");
-    //   } else {
-    //     console.error(
-    //       "Could not find the card on screen! Was the hand re-rendered?",
-    //     );
-    //   }
-    // }
-
-    if (outcome === "TIMEOUT" || outcome === "END_TURN_CLICKED") {
+    if (checkGameOver()) return;
+    if (
+      outcome === "TIMEOUT" ||
+      outcome === "END_TURN_CLICKED" ||
+      outcome === "GAME_OVER"
+    ) {
       updateDialogue("Turn ended.");
       isTurnOver = true;
     } else {
@@ -724,6 +757,7 @@ const playerTurn = async function () {
       console.log(`What is cardData? ${cardData}!`); // for test, TBD
       await delay(2000);
       await resolveCardEffect(cardData);
+      if (checkGameOver()) return;
 
       if (cardData.type === "ATTACK") {
         isAttackCardPlayed = true;
@@ -755,6 +789,7 @@ const enemyTurn = async function () {
   // Draw 1 card at start of turn
   if (deck.length !== 0) {
     enemyDraw();
+    console.log("check enemy hand: ", enemyHand); // for test, TBD
   } else {
     console.log("Deck is empty, cannot draw more cards. Game Ended");
     updateDialogue("Deck is empty, cannot draw more cards. Game Ended");
@@ -839,6 +874,7 @@ const enemyTurn = async function () {
   // AI logic with for loop
   for (let i = 0; i < enemyHand.length; ) {
     const cardData = enemyHand[i];
+    // below console log for check, TBD
     console.log("Card Type Detected:", cardData.type);
     console.log("Card ID is:", cardData.id);
     console.log("Is Attack already played?:", isAttackCardPlayed);
@@ -876,13 +912,16 @@ const enemyTurn = async function () {
 
     await delay(2000);
     await resolveCardEffect(cardData);
-
+    if (checkGameOver()) return;
     if (cardData.type === "ATTACK") isAttackCardPlayed = true;
     if (cardData.type === "CRITICAL") isCriticalCardPlayed = true;
     if (cardData.type === "HEAL" && enemy.HP >= enemy.maxHP)
       wantToStopHeal = true;
     // loop continues without i++ so next element at index i is processed
   }
+
+  // Win/Lose Check if enemy has no more cards to play
+  if (checkGameOver()) return;
 
   await delay(1000);
   console.log("Enemy turn ended, moving to Player...");
@@ -892,6 +931,30 @@ const enemyTurn = async function () {
   updateDialogue(`It is ${turn}'s turn.`);
   console.log(`It is ${turn}'s turn.`); // for test, TBD
   playerTurn(); // Switch back
+};
+
+const checkWinner = () => {
+  if (player.HP <= 0 || enemy.HP <= 0) isGameOver = true;
+  return isGameOver;
+};
+
+const checkGameOver = () => {
+  if (player.HP <= 0 || enemy.HP <= 0) {
+    isGameOver = true;
+
+    if (player.HP <= 0 && enemy.HP <= 0) {
+      updateDialogue("Draw!");
+    } else if (player.HP <= 0) {
+      updateDialogue("You have been defeated! YOU LOSE!");
+    } else {
+      updateDialogue("You have defeated the enemy! YOU WIN!");
+    }
+
+    renderResetButton();
+    return true;
+  }
+
+  return false;
 };
 
 const enemyTurnCopy = async function () {
