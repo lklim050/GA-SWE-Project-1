@@ -446,10 +446,7 @@ const resolveCardEffect = async (card) => {
       }
     case "DODGED":
       // Implement dodge logic
-      if (turn.includes("Player")) {
-        console.log(`Invalid card: You cannot play DODGED on your turn!`); // for test, TBD
-        updateDialogue(`Invalid card: You cannot play DODGED on your turn!`);
-      }
+      // No need to do anything here if reaction is handled in the attack case
       break;
     case "HEAL":
       // Implement heal logic
@@ -515,19 +512,17 @@ const renderResetButton = () => {
   });
 };
 
-const cardOntoActiveZone = (cardData, isPlayer) => {
-  const activeZone = isPlayer
-    ? document.querySelector(".active-player")
-    : document.querySelector(".active-enemy");
+const cardOntoActiveZone = (cardData, turn) => {
+  const activeZone =
+    turn === "Player"
+      ? document.querySelector(".active-player")
+      : document.querySelector(".active-enemy");
   if (activeZone) {
-    const activeCardVisual = document.createElement("div");
-    activeCardVisual.className = isPlayer
-      ? "card active-player"
-      : "card active-enemy";
-    activeCardVisual.innerText = cardData.type;
-    activeZone.appendChild(activeCardVisual);
+    activeZone.appendChild(cardData);
+    cardData.className =
+      turn === "Player" ? "card active-player" : "card active-enemy";
   } else {
-    console.warn("Active zone not found! Check your HTML structure.");
+    console.warn("Active zone or card not found! Check your HTML structure.");
   }
 };
 
@@ -603,7 +598,8 @@ const playerTurn = async function () {
   let isCriticalCardPlayed = false;
   // 2. Start the Loop
   while (!isTurnOver) {
-    const outcome = await playerTurnCountDown(); // This is the "Messenger"
+    // This gives string such as "END_TURN_CLICKED", "TIMEOUT", or the clicked card element
+    const outcome = await playerTurnCountDown();
 
     if (outcome === "TIMEOUT" || outcome === "END_TURN_CLICKED") {
       updateDialogue("Turn ended.");
@@ -638,26 +634,30 @@ const playerTurn = async function () {
 
       // 4. Remove the card from hand and place on active zone
       const cardIndex = playerHand.findIndex((c) => c.id == cardData.id);
+      const cardElement = document.querySelector(`[data-id="${cardData.id}"]`);
       if (cardIndex > -1) {
-        const activePlayerZone = document.querySelector(".active-player");
+        cardOntoActiveZone(cardElement, turn);
 
-        if (activePlayerZone) {
-          // B. card renderng at active player zone after card played
-          const activeCardVisual = document.createElement("div");
-          activeCardVisual.className = "card active-player"; // Style this in CSS!
-          activeCardVisual.innerText = cardData.type;
+        // const activePlayerZone = document.querySelector(".active-player");
 
-          // C. Append it to the play area
-          activePlayerZone.appendChild(activeCardVisual);
+        // if (activePlayerZone) {
+        //   // Card renderng at active player zone after card played
+        //   const activeCardVisual = document.createElement("div");
+        //   activeCardVisual.className = "card active-player"; // Style this in CSS!
+        //   activeCardVisual.innerText = cardData.type;
 
-          // D. (to implement later) Auto-remove cards from active zone.
-          // setTimeout(() => {
-          //   activeCardVisual.remove();
-          // }, 2000);
-        }
+        //   // Append it to the play area
+        //   activePlayerZone.appendChild(activeCardVisual);
 
-        // 5. Remove the card from hand and UI (Your existing code)
+        //   // (to implement later) Auto-remove cards from active zone.
+        //   // setTimeout(() => {
+        //   //   activeCardVisual.remove();
+        //   // }, 2000);
+        // }
+
+        // 5. Remove the card from hand and UI (from the playerHand array too)
         playerHand.splice(cardIndex, 1);
+        // To remove the countdown once a card is played to kill the remaining countdown
         outcome.remove();
 
         // 6. Resolve the card effect after removal from hand
@@ -712,6 +712,103 @@ const enemyTurn = async function () {
   console.log("Your Enemy is thinking...");
   await delay(2000);
 
+  let isTurnOver = false;
+  // Check if only one attack or critical card can be played per turn
+  let isAttackCardPlayed = false;
+  let isCriticalCardPlayed = false;
+  let wantToStopHeal = false;
+
+  for (const card of enemyHand) {
+    // const cardIndex = enemyHand.findIndex((c) => c.type === "ATTACK");
+    console.log("Card Type Detected:", card.type); // for test, TBD
+    console.log("Card ID is:", card.id); // for test, TBD
+    console.log("Is Attack already played?:", isAttackCardPlayed); // for test, TBD
+    console.log("Is Critical already played?:", isCriticalCardPlayed); // for test, TBD
+    console.log("Does Enemy want to stop Heal?:", wantToStopHeal); // for test, TBD
+
+    if (card.type === "DODGED") {
+      // when card is DODGED, to continue to the next loop
+      continue;
+    }
+    if (card.type === "ATTACK" && isAttackCardPlayed) {
+      // updateDialogue("Limit reached: Only 1 ATTACK per turn!");
+      // await delay(1200);
+      continue; // Restart the loop so player can pick a different card
+    }
+
+    if (card.type === "CRITICAL" && isCriticalCardPlayed) {
+      // updateDialogue("Limit reached: Only 1 CRITICAL per turn!");
+      // await delay(1200);
+      continue; // Restart the loop so player can pick a different card
+    }
+
+    if (card.type !== "DODGED") {
+      updateDialogue(`Enemy is about to play ${card.type}...`);
+      // this is necessary to select the html card div
+      const cardElement = document.querySelector(`[data-id="${card.id}"]`);
+
+      if (cardElement) {
+        cardOntoActiveZone(cardElement, turn);
+        console.log(
+          `Card: ${card.name} , ID: ${card.id} placed on active zone`,
+        ); // for test, TBD
+      } else {
+        console.warn("Card element not found for active zone placement!"); // for test, TBD
+      }
+
+      enemyHand.splice(
+        enemyHand.findIndex((c) => c.id === card.id),
+        1,
+      );
+      console.log(`Enemy hand after playing card: ${enemyHand}`); // for test, TBD
+      await delay(2000);
+      await resolveCardEffect(card);
+    }
+
+    // flip boolean switch after playing attack or critical card
+    // to enforce 1 card limitation for each type
+    if (card.type === "ATTACK") {
+      isAttackCardPlayed = true;
+    }
+    if (card.type === "CRITICAL") {
+      isCriticalCardPlayed = true;
+    }
+    if (card.type === "HEAL" && enemy.HP >= enemy.maxHP) {
+      wantToStopHeal = true;
+    }
+  }
+
+  await delay(1000);
+  console.log("Enemy turn ended, moving to Player...");
+  updateDialogue("Enemy turn ended, moving to Player...");
+  await delay(2000);
+  turn = "Player";
+  updateDialogue(`It is ${turn}'s turn.`);
+  console.log(`It is ${turn}'s turn.`); // for test, TBD
+  playerTurn(); // Switch back
+};
+
+const enemyTurnCopy = async function () {
+  console.log(`Turn Start: ${turn}`);
+
+  // Visually indicate turn change by borders
+  turnIndicator();
+  // Draw 1 card at start of turn
+  if (deck.length !== 0) {
+    enemyDraw();
+  } else {
+    console.log("Deck is empty, cannot draw more cards. Game Ended");
+    updateDialogue("Deck is empty, cannot draw more cards. Game Ended");
+    renderResetButton();
+    return; // Exit the function if the deck is empty
+  }
+  //   await delay(1000);
+  console.log("Draw 1 card for enemy");
+  await delay(1000);
+  updateDialogue("Your Enemy is thinking...");
+  console.log("Your Enemy is thinking...");
+  await delay(2000);
+
   // 3. Action Phase - Enemy AI Logic
   // First to look for index of various cards if available in hand
   // Enemy Attack logic
@@ -735,9 +832,9 @@ const enemyTurn = async function () {
     );
     if (cardElement) {
       cardElement.remove();
-      console.log(`Visual card ${enemyCardPlayed.id} removed from Enemy hand`);
+      console.log(`Card ${enemyCardPlayed.id} removed from Enemy hand`);
     } else {
-      console.warn("Visual card not found! Check your ID naming convention.");
+      console.warn("Card not found! Check your ID or other possibilities.");
     }
 
     // Place card onto active zone from enemy hand

@@ -24,6 +24,13 @@
 24. Implement dodged restrictions during player turn
 
 
+NOTE 1: Dodged card visually is not removed from hand
+NOTE 2: Dodged card is not on active zone upon played
+NOTE 3: need to check hand array if splice is done correctly
+NOTE 4: check the activetozonecard function why it cannot work correctly during enemy turn
+
+
+
 //16. Function that move card from active zone to discard pile after turn end
 //17. Function that record card in discard pile for later reshuffling
 

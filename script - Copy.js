@@ -515,19 +515,19 @@ const renderResetButton = () => {
   });
 };
 
-const cardOntoActiveZone = (cardData, isPlayer) => {
-  const activeZone = isPlayer
-    ? document.querySelector(".active-player")
-    : document.querySelector(".active-enemy");
+const cardOntoActiveZone = (cardData, turn) => {
+  const activeZone =
+    turn === "Player"
+      ? document.querySelector(".active-player")
+      : document.querySelector(".active-enemy");
   if (activeZone) {
-    const activeCardVisual = document.createElement("div");
-    activeCardVisual.className = isPlayer
-      ? "card active-player"
-      : "card active-enemy";
-    activeCardVisual.innerText = cardData.type;
-    activeZone.appendChild(activeCardVisual);
+    const activeCardToZone = document.createElement("div");
+    activeCardToZone.className =
+      turn === "Player" ? "card active-player" : "card active-enemy";
+    activeCardToZone.innerText = cardData.type;
+    activeZone.appendChild(activeCardToZone);
   } else {
-    console.warn("Active zone not found! Check your HTML structure.");
+    console.warn("Active zone or card not found! Check your HTML structure.");
   }
 };
 
