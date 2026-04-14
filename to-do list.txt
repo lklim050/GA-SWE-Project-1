@@ -30,7 +30,10 @@
 30. Function that allow preloaded hand and deck for testing purpose
 
 
+// bug fix to solve after game reset, enemy hand no card and player hand not reset properly
+// bug fix enemy AI did not loop properly, card skip (found due to extra splice)
 
+// implement delay control at variables
 
 
 //16. Function that move card from active zone to discard pile after turn end

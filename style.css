@@ -108,6 +108,7 @@ body {
   margin-right: 5px;
 }
 .card-slot {
+  transform: scale(1.15);
   background: rgba(0, 0, 0, 0.3);
   border: 2px dashed whitesmoke;
 }
