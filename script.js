@@ -5,6 +5,10 @@ const cardTypes = ["ATTACK", "DODGED", "HEAL", "CRITICAL"];
 
 let playerHand = [];
 let enemyHand = [];
+let playerActiveZone = [];
+let enemyActiveZone = [];
+let discardPile = [];
+let discardCount = 0;
 let player;
 let enemy;
 let deck = [];
@@ -23,7 +27,7 @@ let playerHandTest = [
   { type: "ATTACK", id: 22 },
 ]; // for testing, TBD
 let enemyHandTest = [
-  { type: "HEAL", id: 23 },
+  { type: "ATTACK", id: 23 },
   { type: "HEAL", id: 24 },
 ]; // for testing, TBD
 
@@ -61,7 +65,7 @@ const DemonKing = new Character("Demon-King", 9, 15, 15, 0);
 
 class Warrior extends Character {
   constructor() {
-    super("Warrior", 4, 1, 14, 2);
+    super("Warrior", 4, 10, 14, 2);
   }
 }
 
@@ -306,7 +310,7 @@ const updateDialogue = (message) => {
   document.querySelector("#dialogue-box").innerHTML = message;
 };
 
-// Pause function
+// Pause function (currently used for dodged reaction only, can be used for future effect animation or card effect)
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Delay function
@@ -700,7 +704,8 @@ const playerTurn = async function () {
       // 1. Define cardData here so the rest of the function can see it
       // outcome is the clicked <div>, we use its dataset.id to find the object
       const cardData = playerHand.find((c) => c.id == outcome);
-      // console.log("Card Type Detected:", cardData.type); // for test, TBD
+      const cardIndex = playerHand.findIndex((c) => c.id == cardData.id);
+      console.log("Card Type Detected:", cardData.type); // for test, TBD
       console.log("Card ID is:", cardData.id); // for test, TBD
       console.log("Is Attack already played?:", isAttackCardPlayed); // for test, TBD
 
@@ -726,18 +731,10 @@ const playerTurn = async function () {
 
       // 4. Remove the card from hand and place on active zone
       const cardElement = document.querySelector(`[data-id="${cardData.id}"]`);
-      console.log("Card Data found:", cardData); // for test, TBD
+      console.log(
+        `Card Data found: Object: ${cardData}, type: ${cardData.type}, id: ${cardData.id}`,
+      ); // for test, TBD
       console.log("Card element checked:", cardElement); // for test, TBD
-      // if (cardElement) {
-      //   cardOntoActiveZone(cardElement, turn);
-      //   console.log(
-      //     `Card: ${cardData.type} , ID: ${cardData.id} placed on active zone`,
-      //   ); // for test, TBD
-      // } else {
-      //   console.warn(
-      //     "player Card element not found for active zone placement!",
-      //   ); // for test, TBD
-      // }
 
       if (cardElement) {
         cardOntoActiveZone(cardElement, turn);
@@ -753,38 +750,28 @@ const playerTurn = async function () {
         ); // for test, TBD
       }
 
-      // test code to be deleted later, TBD
-      // const activePlayerZone = document.querySelector(".active-player");
-      // if (activePlayerZone) {
-      //   // Card renderng at active player zone after card played
-      //   const activeCardVisual = document.createElement("div");
-      //   activeCardVisual.className = "card active-player"; // Style this in CSS!
-      //   activeCardVisual.innerText = cardData.type;
+      // Improvement, move card from hand array to active zone array
+      if (cardIndex !== -1) {
+        const movedCard = playerHand.splice(cardIndex, 1)[0];
+        playerActiveZone.push(movedCard);
+      } else {
+        console.warn(
+          "Card not found in player hand array or index is invalid.",
+        );
+      }
 
-      //   // Append it to the play area
-      //   activePlayerZone.appendChild(activeCardVisual);
-
-      //   // (to implement later) Auto-remove cards from active zone.
-      //   // setTimeout(() => {
-      //   //   activeCardVisual.remove();
-      //   // }, 2000);
-      // }
-
-      // Remove card from the playerHand array
-      playerHand.splice(
-        playerHand.findIndex((c) => c.id == cardData.id),
-        1,
-      );
-      console.log(`Player hand after playing card: ${playerHand}`); // for test, TBD
-
-      // Remove the ORIGINAL element from the hand UI (the clone stays in the active zone)
-      // TBD if not necessary after testing
-      // const originalHandEl = document.querySelector(
-      //   `#player-hand-container [data-id="${cardData.id}"]`,
+      // Previous version, TBD if new version works better
+      // playerHand.splice(
+      //   playerHand.findIndex((c) => c.id == cardData.id),
+      //   1,
       // );
-      // if (originalHandEl) originalHandEl.remove();
 
-      // 6. Resolve the card effect after removal from hand
+      console.log(`Player hand array after playing card: ${playerHand}`); // for test, TBD
+      console.log(
+        `Player active zone array after playing card: ${playerActiveZone}`,
+      ); // for test, TBD
+
+      // Resolve the card effect after removal from hand
       // Then enforce the boolean switch for attack and critical cards
       // for the 1 card limitation
       updateDialogue(`You played ${cardData.type}!`);
@@ -803,8 +790,18 @@ const playerTurn = async function () {
       }
     }
   }
+  // End Phase, move objects from active zone array to discard pile array with discard pile count
+  // this includes remove html element in active zone and add to discard pile (if required)
+  for (const card of playerActiveZone) {
+    discardPile.push(card);
+    discardCount++;
+    console.log(`Discard Pile: ${discardPile}`);
+    console.log(`Discard Count: ${discardCount}`);
+  }
+  // to confirm if player active zone array is empty
+  playerActiveZone = [];
 
-  // End of Turn, Switch to Enemy
+  // End Phase, Switch to Enemy
   console.log("Player turn ended, moving to Enemy ..."); // for test, TBD
   updateDialogue("Player turn ended, moving to Enemy ...");
   await delay(2000);
@@ -919,6 +916,7 @@ const enemyTurn = async function () {
     console.log("Is Critical already played?:", isCriticalCardPlayed);
     console.log("Does Enemy want to stop Heal?:", wantToStopHeal);
 
+    // Validation: during loop, if card is not valid for play, i++ to move to next
     if (cardData.type === "DODGED") {
       i++; // skip dodged cards
       continue;
@@ -951,6 +949,13 @@ const enemyTurn = async function () {
     // Remove from hand and DO NOT increment i (next card shifts into current index)
     enemyHand.splice(i, 1);
     console.log(`Enemy hand after playing card: ${enemyHand}`);
+
+    if (i !== -1) {
+      const movedCard = enemyHand.splice(i, 1)[0];
+      enemyActiveZone.push(movedCard);
+    } else {
+      console.warn("Card not found in enemy hand array or index is invalid.");
+    }
 
     await delay(2000);
     await resolveCardEffect(cardData);

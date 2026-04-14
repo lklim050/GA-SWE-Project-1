@@ -30,10 +30,6 @@
 30. Function that allow preloaded hand and deck for testing purpose
 
 
-NOTE 1: Dodged card visually is not removed from hand
-NOTE 2: Dodged card is not on active zone upon played
-NOTE 3: need to check hand array if splice is done correctly
-NOTE 4: check the activetozonecard function why it cannot work correctly during enemy turn
 
 
 
