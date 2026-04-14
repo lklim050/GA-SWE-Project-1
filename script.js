@@ -1,7 +1,7 @@
 // -----------------Constants and Variables------------------------
 // Allows future type additions and quantity changes
 const cardTypes = ["ATTACK", "DODGED", "HEAL", "CRITICAL"];
-const cardTypesQuantity = [8, 4, 4, 4];
+// const cardTypesQuantity = [8, 4, 4, 4];
 
 let playerHand = [];
 let enemyHand = [];
@@ -15,7 +15,17 @@ const dialogue = document.querySelector("#dialogue-box");
 const playerText = document.querySelector(".player-text");
 const enemyText = document.querySelector(".enemy-text");
 const deckCount = document.querySelector("#draw-deck");
-// const handContainer = document.getElementById("player-hand-container");
+
+// Below are preloaded data for testing purpose, TBD
+const cardTypesQuantity = [0, 0, 10, 0]; // for testing, TBD
+let playerHandTest = [
+  { type: "ATTACK", id: 21 },
+  { type: "ATTACK", id: 22 },
+]; // for testing, TBD
+let enemyHandTest = [
+  { type: "HEAL", id: 23 },
+  { type: "HEAL", id: 24 },
+]; // for testing, TBD
 
 // ------------------------Classes---------------------------------
 
@@ -51,7 +61,7 @@ const DemonKing = new Character("Demon-King", 9, 15, 15, 0);
 
 class Warrior extends Character {
   constructor() {
-    super("Warrior", 4, 14, 14, 2);
+    super("Warrior", 4, 1, 14, 2);
   }
 }
 
@@ -60,13 +70,6 @@ class Minion extends Character {
     super("Minion", 1, 8, 8, 1);
   }
 }
-
-// Reset the board and hands
-// const Warrior = class extends Character {
-//   constructor(name="warrior", ATK=4, HP=12, SPD=2) {
-//     super(name, ATK, HP, SPD);
-//   }
-// };
 
 // -----------------------Functions---------------------------------
 
@@ -158,6 +161,27 @@ const loadEnemyData = (enemy) => {
   enemyText.textContent = `Enemy | Class: ${name} | ATK: ${atk} | HP: ${hp}/${maxHP} | SPD: ${spd}`;
 };
 
+// Preload hand for testing purpose, TBD
+const preloadHandForTesting = (somePHandTest, someEHandTest, someTurn) => {
+  let playerHand = somePHandTest; // for testing, TBD
+  let enemyHand = someEHandTest; // for testing, TBD
+  if (someTurn === "Player") {
+    for (let i = 0; i < playerHand.length; i++) {
+      renderHandCard(playerHand[i]);
+    }
+    for (let j = 0; j < enemyHand.length; j++) {
+      renderEnemyHandCard(enemyHand[j]);
+    }
+  } else if (someTurn === "Enemy") {
+    for (let i = 0; i < enemyHand.length; i++) {
+      renderEnemyHandCard(enemyHand[i]);
+    }
+    for (let j = 0; j < playerHand.length; j++) {
+      renderHandCard(playerHand[j]);
+    }
+  }
+};
+
 function renderHandCard(cardData) {
   const cardElement = document.createElement("div");
 
@@ -213,12 +237,17 @@ const checkFirstTurnWithCardDealt = async (player, enemy) => {
     updateDialogue(`Player is faster and will go first!`);
     await delay(2000);
     updateDialogue("Dealing Hands...");
-    for (let i = 0; i < 3; i++) {
-      playerDraw();
-      await delay(500);
-      enemyDraw();
-      await delay(500);
-    }
+    // the following is preload hand for testing purpose, TBD
+    playerHand = playerHandTest; // for testing, TBD
+    enemyHand = enemyHandTest; // for testing, TBD
+    preloadHandForTesting(playerHandTest, enemyHandTest, turn); // for testing, TBD
+    // the following is the actual code for dealing hand, to be restored after testing, TBD
+    // for (let i = 0; i < 3; i++) {
+    //   playerDraw();
+    //   await delay(500);
+    //   enemyDraw();
+    //   await delay(500);
+    // }
     await delay(1000);
     playerTurn();
   } else {
@@ -226,12 +255,17 @@ const checkFirstTurnWithCardDealt = async (player, enemy) => {
     updateDialogue(`Enemy is faster and will go first!`);
     await delay(2000);
     updateDialogue("Dealing Hands...");
-    for (let i = 0; i < 3; i++) {
-      enemyDraw();
-      await delay(500);
-      playerDraw();
-      await delay(500);
-    }
+    // the following is preload hand for testing purpose, TBD
+    playerHand = playerHandTest; // for testing, TBD
+    enemyHand = enemyHandTest; // for testing, TBD
+    preloadHandForTesting(playerHandTest, enemyHandTest, turn); // for testing, TBD
+    // the following is the actual code for dealing hand, to be restored after testing, TBD
+    // for (let i = 0; i < 3; i++) {
+    //   enemyDraw();
+    //   await delay(500);
+    //   playerDraw();
+    //   await delay(500);
+    // }
     await delay(1000);
     enemyTurn();
   }
@@ -455,7 +489,7 @@ const resolveCardEffect = async (card) => {
             `No DODGED!! You attacked the enemy for ${player.ATK} damage!`,
           );
           await delay(3000);
-          checkWinner();
+          // checkWinner(); //TBD if GameOver function works better
         }
       } else {
         // Enemy Attacking Player logic, add player reaction for DODGED card
@@ -488,7 +522,7 @@ const resolveCardEffect = async (card) => {
           loadPlayerData(player);
           updateDialogue(`The enemy hit you for ${enemy.ATK} damage!`);
           await delay(3000);
-          checkWinner();
+          // checkWinner(); //TBD if GameOver function works better
         }
 
         break;
@@ -516,13 +550,13 @@ const resolveCardEffect = async (card) => {
         loadEnemyData(enemy);
         updateDialogue(`You attacked the enemy for ${player.ATK + 2} damage!`);
         await delay(3000);
-        checkWinner();
+        // checkWinner(); //TBD if GameOver function works better
       } else {
         player.critical(enemy.ATK);
         loadPlayerData(player);
         updateDialogue(`The enemy attacked you for ${enemy.ATK + 2} damage!`);
         await delay(3000);
-        checkWinner();
+        // checkWinner(); //TBD if GameOver function works better
       }
       break;
   }
@@ -666,7 +700,7 @@ const playerTurn = async function () {
       // 1. Define cardData here so the rest of the function can see it
       // outcome is the clicked <div>, we use its dataset.id to find the object
       const cardData = playerHand.find((c) => c.id == outcome);
-      console.log("Card Type Detected:", cardData.type); // for test, TBD
+      // console.log("Card Type Detected:", cardData.type); // for test, TBD
       console.log("Card ID is:", cardData.id); // for test, TBD
       console.log("Is Attack already played?:", isAttackCardPlayed); // for test, TBD
 
@@ -807,7 +841,11 @@ const enemyTurn = async function () {
   // Check if only one attack or critical card can be played per turn
   let isAttackCardPlayed = false;
   let isCriticalCardPlayed = false;
-  let wantToStopHeal = false;
+  let wantToStopHeal = enemy.HP >= enemy.maxHP ? true : false;
+  console.log(
+    "Does Enemy want to stop Heal at the beginning of turn?: ",
+    wantToStopHeal,
+  ); // for test, TBD
 
   // Previous version of AI logic, TBD if new version works better
   // for (const cardData of enemyHand) {
@@ -893,8 +931,12 @@ const enemyTurn = async function () {
       i++;
       continue;
     }
+    if (cardData.type === "HEAL" && wantToStopHeal) {
+      i++;
+      continue;
+    }
 
-    // Play the card
+    // Play the card from hand to zone (HTML visual)
     updateDialogue(`Enemy is about to play ${cardData.type}...`);
     const cardElement = document.querySelector(`[data-id="${cardData.id}"]`);
     if (cardElement) {
@@ -933,17 +975,17 @@ const enemyTurn = async function () {
   playerTurn(); // Switch back
 };
 
-const checkWinner = () => {
-  if (player.HP <= 0 || enemy.HP <= 0) isGameOver = true;
-  return isGameOver;
-};
+// const checkWinner = () => {
+//   if (player.HP <= 0 || enemy.HP <= 0) isGameOver = true;
+//   return isGameOver;
+// };
 
 const checkGameOver = () => {
   if (player.HP <= 0 || enemy.HP <= 0) {
     isGameOver = true;
 
     if (player.HP <= 0 && enemy.HP <= 0) {
-      updateDialogue("Draw!");
+      updateDialogue("Game ended in a Draw!");
     } else if (player.HP <= 0) {
       updateDialogue("You have been defeated! YOU LOSE!");
     } else {

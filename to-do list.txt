@@ -22,6 +22,12 @@
 22. Function that updates HTML and style line for active player's turn indicator
 23. HTML and style line for deck count indicator
 24. Implement dodged restrictions during player turn
+25. Implement dodged restrictions during enemy turn
+26. Fix bug that allows player to play card 
+27. Function that check win lose
+28. Fix but that glitchs the game - countdown timer appear after game is over
+29. Function that improve AI decision with healing
+30. Function that allow preloaded hand and deck for testing purpose
 
 
 NOTE 1: Dodged card visually is not removed from hand
