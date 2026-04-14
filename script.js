@@ -8,6 +8,9 @@ const cardDescriptions = [
   "Cannot be dodged, deal ATK+2 damage to HP",
 ]; // to implement later if got time, TBD
 // const cardTypesQuantity = [8, 4, 4, 4];
+const msgDelay = 3000;
+const flowDelay = 2000;
+const shortDelay = 1000;
 
 let playerHand = [];
 let enemyHand = [];
@@ -820,14 +823,28 @@ const playerTurn = async function () {
   for (const card of playerActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log(`Discard Pile: ${discardPile}`);
+    console.log("Discard Pile: ", discardPile);
     console.log(`Discard Count: ${discardCount}`);
     document.querySelector("#discard").innerHTML =
       `Discard Pile: ${discardCount}`;
   }
-
+  // if dodged card is played during player turn from enemy
+  for (const card of enemyActiveZone) {
+    discardPile.push(card);
+    discardCount++;
+    console.log("Discard Pile: ", discardPile);
+    console.log(`Discard Count: ${discardCount}`);
+    document.querySelector("#discard").innerHTML =
+      `Discard Pile: ${discardCount}`;
+  }
   // to confirm if player active zone array is empty
   playerActiveZone = [];
+  console.log(
+    `Player active zone array must be empty after moving to discard: ${playerActiveZone}`,
+  ); // for test, TBD
+  // to remove card element in active-player zone
+  document.querySelector(".active-player").innerHTML = "";
+  document.querySelector(".active-enemy").innerHTML = "";
 
   // End Phase, Switch to Enemy
   console.log("Player turn ended, moving to Enemy ..."); // for test, TBD
@@ -933,6 +950,7 @@ const enemyTurn = async function () {
     if (cardData.type === "CRITICAL") isCriticalCardPlayed = true;
     if (enemy.HP >= enemy.maxHP) wantToStopHeal = true;
     // loop continues without i++ so next element at index i is processed
+    await delay(flowDelay);
   }
 
   // Win/Lose Check if enemy has no more cards to play
@@ -942,17 +960,31 @@ const enemyTurn = async function () {
   for (const card of enemyActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log(`Discard Pile: ${discardPile}`);
+    console.log("Discard Pile: ", discardPile);
     console.log(`Discard Count: ${discardCount}`);
     document.querySelector("#discard").innerHTML =
       `Discard Pile: ${discardCount}`;
   }
-  enemyActiveZone = [];
+  // if dodged card is played during enemy turn from player
+  for (const card of playerActiveZone) {
+    discardPile.push(card);
+    discardCount++;
+    console.log("Discard Pile: ", discardPile);
+    console.log(`Discard Count: ${discardCount}`);
+    document.querySelector("#discard").innerHTML =
+      `Discard Pile: ${discardCount}`;
+  }
 
-  await delay(1000);
+  // to confirm if enemy active zone array is empty
+  enemyActiveZone = [];
+  // to remove card element in active-player zone
+  document.querySelector(".active-player").innerHTML = "";
+  document.querySelector(".active-enemy").innerHTML = "";
+
+  await delay(flowDelay);
   console.log("Enemy turn ended, moving to Player...");
   updateDialogue("Enemy turn ended, moving to Player...");
-  await delay(2000);
+  await delay(msgDelay);
   turn = "Player";
   updateDialogue(`It is ${turn}'s turn.`);
   console.log(`It is ${turn}'s turn.`); // for test, TBD
