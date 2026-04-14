@@ -8,6 +8,8 @@ const cardDescriptions = [
   "Cannot be dodged, deal ATK+2 damage to HP",
 ]; // to implement later if got time, TBD
 // const cardTypesQuantity = [8, 4, 4, 4];
+
+// Below is the delay time in ms
 const msgDelay = 3000;
 const flowDelay = 2000;
 const shortDelay = 1000;
@@ -30,16 +32,18 @@ const enemyText = document.querySelector(".enemy-text");
 const deckCount = document.querySelector("#draw-deck");
 
 // Below are preloaded data for testing purpose, TBD
-const cardTypesQuantity = [0, 0, 10, 0]; // for testing, TBD
-let playerHandTest = [
-  { type: "ATTACK", id: 21 },
-  { type: "ATTACK", id: 23 },
-  { type: "CRITICAL", id: 25 },
-]; // for testing, TBD
+const cardTypesQuantity = [10, 0, 0, 10]; // for testing, TBD
 let enemyHandTest = [
-  { type: "HEAL", id: 22 },
-  { type: "HEAL", id: 24 },
-  { type: "HEAL", id: 26 },
+  { type: "ATTACK", id: 51 },
+  { type: "ATTACK", id: 53 },
+  { type: "CRITICAL", id: 55 },
+  { type: "CRITICAL", id: 57 },
+]; // for testing, TBD
+let playerHandTest = [
+  { type: "DODGED", id: 52 },
+  { type: "DODGED", id: 54 },
+  { type: "HEAL", id: 56 },
+  { type: "HEAL", id: 58 },
 ]; // for testing, TBD
 
 // ------------------------Classes---------------------------------
@@ -139,7 +143,10 @@ const resetActiveZones = () => {
 const resetHTMLDOM = () => {
   document.querySelector(".enemy-face").style.background = "";
   document.querySelector(".player-face").style.background = "";
-  document.querySelector("#discard").innerHTML = "";
+  document.querySelector("#discard").innerHTML = "EMPTY";
+  document.querySelector("#discard").style.background = "";
+  document.querySelector("#discard").style.fontWeight = "";
+  document.querySelector("#discard").style.border = "";
 };
 
 // Creating Deck Content
@@ -220,7 +227,7 @@ function renderHandCard(cardData) {
 
   cardElement.innerHTML = `
     <div class="card-content">
-      <h4>${cardData.type}</h4>
+      <h2>${cardData.type}</h2>
     </div>
   `;
 
@@ -238,7 +245,7 @@ function renderEnemyHandCard(cardData) {
   // to hide card type from player later, TBD
   cardElement.innerHTML = `
     <div class="card-content">
-      <h4>${cardData.type}</h4> 
+      <h2>${cardData.type}</h2> 
     </div>
   `;
 
@@ -486,7 +493,7 @@ const resolveCardEffect = async (card) => {
     case "ATTACK":
       if (turn.includes("Player")) {
         updateDialogue(`Your hit is about to land...`);
-        await pause(2500);
+        await pause(msgDelay);
 
         // Enemy DODGED card check
         const dodgedIndex = enemyHand.findIndex((c) => c.type === "DODGED");
@@ -502,9 +509,8 @@ const resolveCardEffect = async (card) => {
           const dodgedCard = enemyHand[dodgedIndex];
           updateDialogue(`Enemy played DODGED! Your attack was blocked.`);
           console.log("enemy played dodged card successfully"); // for test, TBD
-          enemyHand.splice(dodgedIndex, 1);
-          // removeCardFromUI(dodgedCard.id);
-          console.log(enemyHand); // for test, TBD
+          const movedCard = enemyHand.splice(dodgedIndex, 1)[0];
+          enemyActiveZone.push(movedCard);
           await delay(3000);
         } else {
           // No reaction, proceed with damage
@@ -536,7 +542,8 @@ const resolveCardEffect = async (card) => {
           dodgedCardOntoActiveZone(cardElement, turn);
           // Remove from player hand array
           if (index !== -1) {
-            playerHand.splice(index, 1);
+            const movedCard = playerHand.splice(index, 1)[0];
+            playerActiveZone.push(movedCard);
           }
           // Remove card from player hand and put onto active zone
           // renderPlayerHand();
@@ -601,7 +608,7 @@ const renderEndTurnButton = () => {
   // btn.style.alignItems = "center";
 
   // 2. Append to the specific play area
-  const playArea = document.querySelector(".card.active-player"); // Change this selector to target the correct area
+  const playArea = document.querySelector(".active-player"); // Change this selector to target the correct area
   if (playArea) {
     // If the play area exists, append the button to it
     playArea.appendChild(btn);
@@ -614,7 +621,7 @@ const renderResetButton = () => {
   btn.id = "reset-button";
   btn.innerText = "Reset Game";
   btn.className = "control-btn";
-  const playArea = document.querySelector(".card.active-player");
+  const playArea = document.querySelector(".active-player");
   if (playArea) {
     playArea.appendChild(btn);
   }
@@ -825,6 +832,19 @@ const playerTurn = async function () {
     discardCount++;
     console.log("Discard Pile: ", discardPile);
     console.log(`Discard Count: ${discardCount}`);
+    if (discardCount > 0) {
+      // const discardCardElement = document.createElement("div");
+      // discardCardElement.className = "card-back";
+      // discardCardElement.innerHTML = `Discard Pile: ${discardCount}`;
+      // discardCardElement.style.margin = "auto";
+      // discardPileElement.appendChild(discardCardElement);
+      // discardElement.createElement = "div";
+      // discardElement.className = "card-back";
+
+      document.querySelector("#discard").style.background = "orangered";
+      document.querySelector("#discard").style.fontWeight = "bold";
+      document.querySelector("#discard").style.border = "2px solid white";
+    }
     document.querySelector("#discard").innerHTML =
       `Discard Pile: ${discardCount}`;
   }
@@ -834,6 +854,11 @@ const playerTurn = async function () {
     discardCount++;
     console.log("Discard Pile: ", discardPile);
     console.log(`Discard Count: ${discardCount}`);
+    if (discardCount > 0) {
+      document.querySelector("#discard").style.background = "orangered";
+      document.querySelector("#discard").style.fontWeight = "bold";
+      document.querySelector("#discard").style.border = "2px solid white";
+    }
     document.querySelector("#discard").innerHTML =
       `Discard Pile: ${discardCount}`;
   }
@@ -960,8 +985,13 @@ const enemyTurn = async function () {
   for (const card of enemyActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile);
-    console.log(`Discard Count: ${discardCount}`);
+    console.log("Discard Pile: ", discardPile); // TBD
+    console.log(`Discard Count: ${discardCount}`); //TBD
+    if (discardCount > 0) {
+      document.querySelector("#discard").style.background = "orangered";
+      document.querySelector("#discard").style.fontWeight = "bold";
+      document.querySelector("#discard").style.border = "2px solid white";
+    }
     document.querySelector("#discard").innerHTML =
       `Discard Pile: ${discardCount}`;
   }
@@ -969,8 +999,13 @@ const enemyTurn = async function () {
   for (const card of playerActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile);
-    console.log(`Discard Count: ${discardCount}`);
+    console.log("Discard Pile: ", discardPile); // TBD
+    console.log(`Discard Count: ${discardCount}`); //TBD
+    if (discardCount > 0) {
+      document.querySelector("#discard").style.background = "orangered";
+      document.querySelector("#discard").style.fontWeight = "bold";
+      document.querySelector("#discard").style.border = "2px solid white";
+    }
     document.querySelector("#discard").innerHTML =
       `Discard Pile: ${discardCount}`;
   }

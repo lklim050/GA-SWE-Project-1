@@ -28,6 +28,8 @@
 28. Fix but that glitchs the game - countdown timer appear after game is over
 29. Function that improve AI decision with healing
 30. Function that allow preloaded hand and deck for testing purpose
+31. Array that record card play from hand to active zone
+32. Array that record card play from active zone to discard pile
 
 
 // bug fix to solve after game reset, enemy hand no card and player hand not reset properly
