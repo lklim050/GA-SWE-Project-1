@@ -38,6 +38,7 @@ let turn = "";
 let isGameOver = false;
 let isPlayerPoisoned = false;
 let isEnemyPoisoned = false;
+let wantToStopPoison = false;
 
 const dialogue = document.querySelector("#dialogue-box");
 const playerText = document.querySelector(".player-text");
@@ -51,13 +52,13 @@ let enemyHandTest = [
     type: "POISON",
     id: 51,
     img: "images/POISON-ICON.jpg",
-    text: "Deal 2 damage at every start of turn",
+    text: "Deal 2 damage at every turn",
   },
   {
-    type: "ATTACK",
+    type: "POISON",
     id: 53,
-    img: "images/ATTACK-ICON.jpg",
-    text: "Deal ATK damage",
+    img: "images/POISON-ICON.jpg",
+    text: "Deal 2 damage at every turn",
   },
   {
     type: "HEAL",
@@ -107,7 +108,7 @@ let playerHandTest = [
     type: "POISON",
     id: 62,
     img: "images/POISON-ICON.jpg",
-    text: "Deal 2 damage at every start of turn",
+    text: "Deal 2 damage at every turn",
   },
 ]; // for testing, TBD
 
@@ -1110,7 +1111,7 @@ const playerTurn = async function () {
   let isAttackCardPlayed = false;
   let isCriticalCardPlayed = false;
   let isBombCardPlayed = false;
-  // let isPlayerPoisoned = false;
+  // let isPlayerPoisoned = false; // TBD as this is put at global
   // 2. Start the Loop
   while (!isTurnOver) {
     // This gives string such as "END_TURN_CLICKED", "TIMEOUT", or the clicked card element
@@ -1313,10 +1314,10 @@ const enemyTurn = async function () {
 
   if (isEnemyPoisoned) {
     await delay(flowDelay);
-    player.poison();
-    loadPlayerData(player);
+    enemy.poison();
+    loadPlayerData(enemy);
     updateDialogue(
-      "You take 2 damage due to poison! Use Heal to remove the poison effect!",
+      "Enemy takes 2 damage due to poison! Use Heal to remove the poison effect!",
     );
     await delay(msgDelay);
   }
@@ -1371,6 +1372,10 @@ const enemyTurn = async function () {
       i++;
       continue;
     }
+    if (cardData.type === "POISON" && isPlayerPoisoned) {
+      i++;
+      continue;
+    }
 
     // Play the card from hand to zone (HTML visual)
     updateDialogue(`Enemy is about to play ${cardData.type}...`);
@@ -1402,6 +1407,20 @@ const enemyTurn = async function () {
     if (cardData.type === "CRITICAL") isCriticalCardPlayed = true;
     if (cardData.type === "BOMB") isBombCardPlayed = true;
     if (enemy.HP >= enemy.maxHP) wantToStopHeal = true;
+    wantToStopPoison = isPlayerPoisoned ? true : false;
+
+    if (cardData.type === "HEAL") {
+      if (isEnemyPoisoned) {
+        document.querySelector(".enemy-face").style.background = "";
+      }
+      console.log("Enemy is no longer poisoned"); // for test, TBD
+      updateDialogue(
+        `Enemy healed the poison effect! The enemy is no longer poisoned!`,
+      );
+      isEnemyPoisoned = false;
+      await delay(msgDelay);
+    }
+
     // loop continues without i++ so next element at index i is processed
     await delay(flowDelay);
   }
