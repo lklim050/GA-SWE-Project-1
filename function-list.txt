@@ -133,3 +133,10 @@ async function startNPCTurn() {
   updateDialogue("Your turn!");
 }
 
+
+
+waitForClick in script.js:443 is a generic card picker. It listens on a container, uses event bubbling plus event.target.closest(".card"), and resolves with just the clicked card’s id. It does not care which card type was clicked.
+
+waitForReaction in script.js:476 is a specialized enemy-turn dodge response. It first filters the player hand down to only cards that contain DODGED, attaches click handlers to those specific cards, waits up to a timeout, and resolves with an object like { status: "DODGED_PLAYED", cardId } or null if no dodge was played.
+
+That is why dodge during enemy turn should use waitForReaction, not waitForClick, in script.js:596. The enemy-attack branch expects a DODGED-only reaction and needs the timeout behavior. If you used waitForClick there, any card click could count as a response unless you added extra filtering.

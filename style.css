@@ -110,7 +110,9 @@ body {
 .card {
   background: white;
   color: black;
+  display: flex;
   flex-direction: column;
+  overflow: hidden; /* Clips anything that tries to escape */
   /* flex-basis: 110px; */
   /* margin-right: 5 px; */
 }
@@ -126,16 +128,41 @@ body {
   border: 2px dashed whitesmoke;
 }
 
+/* Styling the text inside the card */
+.card-content h2 {
+  margin: 5px 0;
+  color: #b71c1c; /* Dark red for the card name */
+  text-decoration: underline;
+  flex-shrink: 0; /* Keeps the title height consistent */
+}
+
+.card-content p {
+  font-size: 0.8rem;
+  color: #333;
+  flex-grow: 1; /* Takes up remaining space */
+  line-height: 1.2;
+  overflow: hidden;
+  font-size: 0.8rem;
+  margin: auto;
+}
+
+.card-back-hidden {
+  /* background:palegoldenrod */
+  /* background-image: url("images/card-back.jpg"); */
+  background-image: url("images/card-back-template.jpg");
+  background-size: cover;
+  background-position: center;
+  border-color: #555;
+}
+
+.card-back-hidden * {
+  visibility: hidden;
+}
+
 #draw-deck {
   font-size: 1.2rem;
   color: white;
 }
-
-/* Not yet implemented, 
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-} */
 
 #dialogue-box {
   background: rgba(0, 0, 0, 0.7);
@@ -145,18 +172,6 @@ body {
   margin-bottom: 10px;
   width: 95%;
   text-align: center;
-}
-
-/* Styling the text inside the card */
-.card-content h2 {
-  margin: 5px 0;
-  color: #b71c1c; /* Dark red for the card name */
-  text-decoration: underline;
-}
-
-.card-content p {
-  font-size: 0.8rem;
-  color: #333;
 }
 
 /* Hand containers: layout faces and cards in a row */
@@ -214,8 +229,18 @@ body {
   z-index: 100;
 }
 
+.card-icon {
+  width: 80%; /* Scales the image to fit the card */
+  height: auto; /* Maintains aspect ratio */
+  border-radius: 4px;
+  pointer-events: none; /* Prevents the image from blocking clicks on the card */
+  flex-shrink: 0; /* Tells the image: "Do not shrink to make room for text" */
+  height: 80px;
+}
+
 button {
-  height: 40px;
+  height: 4rem;
+  width: 6rem;
   display: flex;
   flex-direction: row;
   justify-content: center;

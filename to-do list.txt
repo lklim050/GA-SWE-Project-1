@@ -30,6 +30,16 @@
 30. Function that allow preloaded hand and deck for testing purpose
 31. Array that record card play from hand to active zone
 32. Array that record card play from active zone to discard pile
+33. Refactor code to reduce CheckFirstTurn function and create gameflowmanager function to manage turns
+34. implement shortDelay, flowDelay, msgDelay variables to control delay time for different gameflow
+35. Implement new game logic bomb which damage both player and enemy, with limitation to once per turn
+36. Edit the critical hit card to deal damage based on SPD stats.
+37. Implement poison card that damage player at the start of turn, with limitation to once per turn
+38. Implement heal card that can heal poison effect
+39. Improve card visuals with images and style
+40. Hide enemy hand cards
+
+
 
 
 // bug fix to solve after game reset, enemy hand no card and player hand not reset properly
