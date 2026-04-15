@@ -45,21 +45,23 @@ const dialogue = document.querySelector("#dialogue-box");
 const playerText = document.querySelector(".player-text");
 const enemyText = document.querySelector(".enemy-text");
 const deckCount = document.querySelector(".deck-count");
+const discardCountEl = document.querySelector(".discard-count");
+const discardEl = document.querySelector("#discard");
 
 // Below are preloaded data for testing purpose, CBD
 const cardTypesQuantity = [0, 10, 0, 0, 0, 0]; // for testing, TBD
 let enemyHandTest = [
   {
-    type: "DODGED",
+    type: "POISON",
     id: 51,
-    img: "images/DODGED-ICON.jpg",
-    text: "Avoid ATTACK",
+    img: "images/POISON-ICON.jpg",
+    text: "Deal 2 damage at every turn",
   },
   {
-    type: "DODGED",
+    type: "POISON",
     id: 53,
-    img: "images/DODGED-ICON.jpg",
-    text: "Avoid ATTACK",
+    img: "images/POISON-ICON.jpg",
+    text: "Deal 2 damage at every turn",
   },
   {
     type: "HEAL",
@@ -634,181 +636,6 @@ const waitForReaction = (timeoutMs) => {
   });
 };
 
-// To delete later TBD
-const playerTurnCountDownCopy = async function () {
-  let turnTime = 20; // 20 seconds to move
-
-  const endBtn = renderEndTurnButton(); // Create the button and store it in a variable
-
-  updateDialogue(
-    `Please make a move... (<span id="timer-count">${turnTime}</span>s)`,
-  );
-
-  const visualClock = startVisualTimer(turnTime); // start countdown
-  const handZone = document.querySelector("#player-hand-container");
-
-  const waitBtnClick = new Promise((resolve) => {
-    endBtn.addEventListener("click", () => resolve("END_TURN_CLICKED"), {
-      once: true,
-    });
-  });
-
-  const waitForGameOver = new Promise((resolve) => {
-    const checkId = setInterval(() => {
-      if (isGameOver) {
-        clearInterval(checkId);
-        resolve("GAME_OVER");
-      }
-    }, 100); // Check every 100ms
-  });
-
-  // Promise.race to wait either for click or timeout
-  const result = await Promise.race([
-    waitForClick(handZone),
-    waitBtnClick,
-    waitForGameOver,
-    delay(turnTime * 1000).then(() => "TIMEOUT"),
-  ]);
-
-  clearInterval(visualClock);
-  endBtn.remove();
-
-  return result;
-};
-
-// To delete later TBD
-const resolveCardEffectCopy = async (card) => {
-  switch (card.type) {
-    case "ATTACK":
-      if (turn.includes("Player")) {
-        updateDialogue(`Your hit is about to land...`);
-        await pause(msgDelay);
-
-        // Enemy DODGED card check
-        const dodgedIndex = enemyHand.findIndex((c) => c.type === "DODGED");
-        const cardData = enemyHand[dodgedIndex];
-        console.log("What is dodgedIndex? ", dodgedIndex); // for test, TBD
-        if (dodgedIndex !== -1) {
-          //Append card from enemy hand to active zone
-          const dodgedCardElement = document.querySelector(
-            `[data-id="${cardData.id}"]`,
-          );
-          dodgedCardOntoActiveZone(dodgedCardElement, turn);
-          // Enemy avoids the damage
-          const dodgedCard = enemyHand[dodgedIndex];
-          updateDialogue(`Enemy played DODGED! Your attack was blocked.`);
-          console.log("enemy played dodged card successfully"); // for test, TBD
-          const movedCard = enemyHand.splice(dodgedIndex, 1)[0];
-          enemyActiveZone.push(movedCard);
-          await delay(3000);
-        } else {
-          // No reaction, proceed with damage
-          enemy.attack(player.ATK);
-          loadEnemyData(enemy);
-          updateDialogue(
-            `No DODGED!! You attacked the enemy for ${player.ATK} damage!`,
-          );
-          await delay(3000);
-          // checkWinner(); //TBD if GameOver function works better
-        }
-      } else {
-        // Enemy Attacking Player logic, add player reaction for DODGED card
-        updateDialogue("Incoming Attack! Brace yourself...");
-
-        // 1. Give the player 10 seconds to click their DODGED card
-        const toPlayDodged = await waitForReaction(10000);
-
-        if (toPlayDodged && toPlayDodged.status === "DODGED_PLAYED") {
-          // Use the specific ID from the click to remove the correct card
-          const index = playerHand.findIndex(
-            (c) => c.id == toPlayDodged.cardId,
-          );
-          console.log("what is index? ", index); // for test, TBD
-          const cardData = playerHand[index];
-          const cardElement = document.querySelector(
-            `[data-id="${cardData.id}"]`,
-          );
-          dodgedCardOntoActiveZone(cardElement, turn);
-          // Remove from player hand array
-          if (index !== -1) {
-            const movedCard = playerHand.splice(index, 1)[0];
-            playerActiveZone.push(movedCard);
-          }
-          // Remove card from player hand and put onto active zone
-          // renderPlayerHand();
-
-          updateDialogue("You played DODGED! Damage avoided.");
-        } else {
-          player.attack(enemy.ATK);
-          loadPlayerData(player);
-          updateDialogue(`The enemy hit you for ${enemy.ATK} damage!`);
-          await delay(3000);
-          // checkWinner(); //TBD if GameOver function works better
-        }
-
-        break;
-      }
-    case "DODGED":
-      // Implement dodged logic
-      // No need to do anything here if reaction is handled in the attack case
-      break;
-    case "HEAL":
-      // Implement heal logic
-      if (turn.includes("Player")) {
-        player.heal(3); // Example heal amount
-        loadPlayerData(player);
-        updateDialogue(`You healed for 3 damage!`);
-      } else {
-        enemy.heal(3); // Example heal amount
-        loadEnemyData(enemy);
-        updateDialogue(`The enemy healed for 3 damage!`);
-      }
-      break;
-    case "CRITICAL":
-      // Implement critical hit logic
-      if (turn.includes("Player")) {
-        enemy.critical(player.SPD);
-        loadEnemyData(enemy);
-        updateDialogue(
-          `Cannot be dodged! You attacked the enemy for ${player.SPD + 2} damage!`,
-        );
-        await delay(msgDelay);
-      } else {
-        player.critical(enemy.SPD + 2);
-        loadPlayerData(player);
-        updateDialogue(
-          `Cannot be dodged! The enemy attacked you for ${enemy.SPD + 2} damage!`,
-        );
-        await delay(msgDelay);
-      }
-      break;
-    case "BOMB":
-      // Implement bomb logic
-      const enemyBombDamage = enemy.bomb();
-      console.log("Enemy takes bomb damage: ", enemyBombDamage); // for test, TBD
-      loadEnemyData(enemy);
-      const playerBombDamage = player.bomb();
-      console.log("Player takes bomb damage: ", playerBombDamage); // for test, TBD
-      loadPlayerData(player);
-      updateDialogue(
-        `Ka-BOOM! You lose ${playerBombDamage} HP and the enemy loses ${enemyBombDamage} HP!`,
-      );
-      await delay(msgDelay);
-      break;
-    case "POISON":
-      // Implement poison logic
-      if (turn.includes("Player")) {
-        player.poison();
-        loadPlayerData(player);
-        updateDialogue(`You took 2 poison damage!`);
-      } else {
-        enemy.poison();
-        loadEnemyData(enemy);
-        updateDialogue(`The enemy took 2 poison damage!`);
-      }
-  }
-};
-
 const playerTurnCountDown = async function (sessionId) {
   let turnTime = 20; // 20 seconds to move
 
@@ -975,10 +802,12 @@ const resolveCardEffect = async (card) => {
       if (turn.includes("Player")) {
         isEnemyPoisoned = true;
         document.querySelector(".enemy-face").style.background = "red";
+        updateDialogue(" The enemy is poisoned!");
         return true; // Return true to indicate enemy is poisoned
       } else {
         isPlayerPoisoned = true;
         document.querySelector(".player-face").style.background = "red";
+        updateDialogue(" You are poisoned!");
         return true; // Return true to indicate player is poisoned
       }
   }
@@ -1268,9 +1097,9 @@ const playerTurn = async function (sessionId) {
       // for the 1 card limitation
       updateDialogue(`You played ${cardData.type}!`);
       console.log(`What is cardData? ${cardData}!`); // for test, TBD
-      await delay(2000);
+      await delay(flowDelay);
       await resolveCardEffect(cardData);
-
+      await delay(flowDelay);
       // Visual, make HP red when low
       if (player.HP <= player.maxHP / 3) {
         document.querySelector(".player-hp").style.color = "red";
@@ -1296,13 +1125,11 @@ const playerTurn = async function (sessionId) {
       if (cardData.type === "HEAL") {
         if (isPlayerPoisoned) {
           document.querySelector(".player-face").style.background = "";
+          console.log("Player is no longer poisoned"); // for test, TBD
+          updateDialogue(`You are no longer poisoned!`);
+          await delay(msgDelay);
         }
-        console.log("Player is no longer poisoned"); // for test, TBD
-        updateDialogue(
-          `You healed the poison effect! You are no longer poisoned!`,
-        );
         isPlayerPoisoned = false;
-        await delay(msgDelay);
       }
       // if (cardData.type === "POISON" && !isPlayerPoisoned) {
       //   isPlayerPoisoned = true;
@@ -1316,37 +1143,24 @@ const playerTurn = async function (sessionId) {
   for (const card of playerActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile);
-    console.log(`Discard Count: ${discardCount}`);
+    console.log("Discard Pile: ", discardPile); //TBD
+    console.log(`Discard Count: ${discardCount}`); //TBD
     if (discardCount > 0) {
-      // const discardCardElement = document.createElement("div");
-      // discardCardElement.className = "card-back";
-      // discardCardElement.innerHTML = `Discard Pile: ${discardCount}`;
-      // discardCardElement.style.margin = "auto";
-      // discardPileElement.appendChild(discardCardElement);
-      // discardElement.createElement = "div";
-      // discardElement.className = "card-back";
-
-      document.querySelector("#discard").style.background = "orangered";
-      document.querySelector("#discard").style.fontWeight = "bold";
-      document.querySelector("#discard").style.border = "2px solid white";
+      discardEl.classList.add("card-back-hidden");
     }
-    document.querySelector("#discard").innerHTML =
-      `Discard Pile: ${discardCount}`;
+
+    discardCountEl.innerHTML = `Discarded: ${discardCount}`;
   }
   // if dodged card is played during player turn from enemy
   for (const card of enemyActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile);
-    console.log(`Discard Count: ${discardCount}`);
+    console.log("Discard Pile: ", discardPile); //TBD
+    console.log(`Discard Count: ${discardCount}`); //TBD
     if (discardCount > 0) {
-      document.querySelector("#discard").style.background = "orangered";
-      document.querySelector("#discard").style.fontWeight = "bold";
-      document.querySelector("#discard").style.border = "2px solid white";
+      discardEl.classList.add("card-back-hidden");
     }
-    document.querySelector("#discard").innerHTML =
-      `Discard Pile: ${discardCount}`;
+    discardCountEl.innerHTML = `Discarded: ${discardCount}`;
   }
   // to confirm if player active zone array is empty
   playerActiveZone = [];
@@ -1496,9 +1310,9 @@ const enemyTurn = async function (sessionId) {
       console.warn("Card not found in enemy hand array or index is invalid.");
     }
 
-    await delay(2000);
+    await delay(flowDelay);
     await resolveCardEffect(cardData);
-
+    await delay(flowDelay);
     // Visual, make HP red when low
     if (enemy.HP <= enemy.maxHP / 3) {
       document.querySelector(".enemy-hp").style.color = "red";
@@ -1517,13 +1331,11 @@ const enemyTurn = async function (sessionId) {
     if (cardData.type === "HEAL") {
       if (isEnemyPoisoned) {
         document.querySelector(".enemy-face").style.background = "";
+        console.log("Enemy is no longer poisoned"); // for test, TBD
+        updateDialogue(`Enemy is no longer poisoned!`);
+        await delay(msgDelay);
       }
-      console.log("Enemy is no longer poisoned"); // for test, TBD
-      updateDialogue(
-        `Enemy healed the poison effect! The enemy is no longer poisoned!`,
-      );
       isEnemyPoisoned = false;
-      await delay(msgDelay);
     }
 
     // loop continues without i++ so next element at index i is processed
