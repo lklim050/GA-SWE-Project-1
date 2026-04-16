@@ -52,6 +52,7 @@ body {
   margin: 30px auto;
   padding: 40px 80px;
   font-size: 24px;
+  margin-top: -100px;
 }
 
 #toggle-rules-btn {
@@ -387,6 +388,13 @@ button {
 
 .game-title {
   font-size: 4em;
+}
+
+.game-title img {
+  display: block;
+  width: 750px;
+  height: auto;
+  margin: 0 auto;
 }
 
 h2 {
