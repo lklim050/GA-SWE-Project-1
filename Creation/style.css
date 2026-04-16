@@ -118,6 +118,10 @@ body {
   z-index: 1200;
 }
 
+#enemy-selection {
+  z-index: 1200;
+}
+
 #loading-page {
   z-index: 1300;
   background: radial-gradient(circle, green 0%, #05070d 100%);

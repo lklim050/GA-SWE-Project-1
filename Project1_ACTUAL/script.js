@@ -8,7 +8,7 @@ const cardDescriptions = [
   "Can't dodge, Deal SPD damage",
   "Deal 1-5 damage to all players",
   "Deal 2 damage at every start of turn",
-]; // to implement later if got time, TBD
+];
 const cardImages = [
   "images/ATTACK-ICON.jpg",
   "images/DODGED-ICON.jpg",
@@ -18,12 +18,15 @@ const cardImages = [
   "images/POISON-ICON.jpg",
 ];
 
-// const cardTypesQuantity = [8, 4, 4, 4, 2, 4];
+const cardTypesQuantity = [5, 5, 4, 2, 2, 2];
 
 // Below is the delay time in ms
 const msgDelay = 2500;
 const flowDelay = 1500;
 const shortDelay = 500;
+
+// Below controls countdown time during player turn`in seconds
+const countdownTime = 10;
 
 let playerHand = [];
 let enemyHand = [];
@@ -40,6 +43,7 @@ let isPlayerPoisoned = false;
 let isEnemyPoisoned = false;
 let wantToStopPoison = false;
 let gameSessionId = 0;
+let cardUidCounter = 0;
 
 const dialogue = document.querySelector("#dialogue-box");
 const playerText = document.querySelector(".player-text");
@@ -52,6 +56,7 @@ const startBtn = document.querySelector("#start-game-btn");
 const toggleRulesBtn = document.querySelector("#toggle-rules-btn");
 const coverPage = document.querySelector("#cover-page");
 const charSelection = document.querySelector("#char-selection");
+const enemySelection = document.querySelector("#enemy-selection");
 const gameContainer = document.querySelector("#game-container");
 const loadingPage = document.querySelector("#loading-page");
 const rulesPanel = document.querySelector("#rules-panel");
@@ -59,77 +64,7 @@ const rulesPanel = document.querySelector("#rules-panel");
 const playerFaceEl = document.querySelector(".player-face");
 const enemyFaceEl = document.querySelector(".enemy-face");
 
-const syncPoisonFaceVisuals = () => {
-  playerFaceEl?.classList.toggle("poisoned-face", isPlayerPoisoned);
-  enemyFaceEl?.classList.toggle("poisoned-face", isEnemyPoisoned);
-};
-
-// Below are preloaded data for testing purpose, CBD
-const cardTypesQuantity = [0, 10, 0, 0, 0, 0]; // for testing, TBD
-let enemyHandTest = [
-  {
-    type: "POISON",
-    id: 51,
-    img: "images/POISON-ICON.jpg",
-    text: "Deal 2 damage at every turn",
-  },
-  {
-    type: "POISON",
-    id: 53,
-    img: "images/POISON-ICON.jpg",
-    text: "Deal 2 damage at every turn",
-  },
-  {
-    type: "ATTACK",
-    id: 55,
-    img: "images/ATTACK-ICON.jpg",
-    text: "Deal ATK damage",
-  },
-  {
-    type: "DODGED",
-    id: 57,
-    img: "images/DODGED-ICON.jpg",
-    text: "Avoid ATTACK",
-  },
-]; // for testing, CBD
-let playerHandTest = [
-  {
-    type: "ATTACK",
-    id: 52,
-    img: "images/ATTACK-ICON.jpg",
-    text: "Deal ATK damage",
-  },
-  {
-    type: "DODGED",
-    id: 54,
-    img: "images/DODGED-ICON.jpg",
-    text: "Avoid ATTACK",
-  },
-  {
-    type: "HEAL",
-    id: 56,
-    img: "images/HEAL-ICON.jpg",
-    text: "+3 HP, Heal Poison",
-  },
-  {
-    type: "CRITICAL",
-    id: 58,
-    img: "images/CRITICAL-ICON.jpg",
-    text: "Can't dodge, Deal SPD damage",
-  },
-  {
-    type: "BOMB",
-    id: 60,
-    img: "images/BOMB-ICON.jpg",
-    text: "Deal 1-5 damage to all players",
-  },
-  {
-    type: "POISON",
-    id: 62,
-    img: "images/POISON-ICON.jpg",
-    text: "Deal 2 damage at every turn",
-  },
-]; // for testing, CBD
+let selectedPlayerClass = "Warrior";
 
 // ------------------------Classes---------------------------------
 
@@ -160,8 +95,6 @@ const Character = class {
     const amount = Math.floor(Math.random() * 5) + 1; // Random damage between 1 and 5
 
     this.HP -= amount;
-
-    console.log(`New HP: ${this.HP}`);
     return amount;
   }
 
@@ -172,47 +105,39 @@ const Character = class {
   }
 };
 
-// (name, ATK, HP, maxHP, SPD)
-// const Warrior = new Character("Warrior", 4, 16, 16, 4);
-// const Minion = new Character("Minion", 1, 6, 6, 3);
-// const Mage = new Character("Mage", 5, 14, 14, 5);
-// const Ninja = new Character("Ninja", 6, 12, 12, 6);
-// const Archer = new Character("Archer", 7, 10, 10, 7);
-// const DemonKing = new Character("Demon-King", 7, 20, 20, 2);
-
 class Warrior extends Character {
   constructor() {
-    super("Warrior", 4, 14, 16, 4);
+    super("Warrior", 4, 16, 16, 4);
   }
 }
 
 class Minion extends Character {
   constructor() {
-    super("Minion", 1, 5, 8, 3);
+    super("Minion", 1, 8, 8, 3);
   }
 }
 
 class Mage extends Character {
   constructor() {
-    super("Mage", 5, 12, 14, 5);
+    super("Mage", 5, 14, 14, 5);
   }
 }
 
 class Ninja extends Character {
   constructor() {
-    super("Ninja", 6, 10, 12, 6);
+    super("Ninja", 6, 12, 12, 6);
   }
 }
 
 class Archer extends Character {
   constructor() {
-    super("Archer", 7, 8, 10, 7);
+    super("Archer", 7, 10, 10, 7);
   }
 }
 
 class DemonKing extends Character {
   constructor() {
-    super("Demon-King", 9, 14, 20, 2);
+    super("Demon-King", 9, 20, 20, 2);
   }
 }
 
@@ -235,18 +160,27 @@ toggleRulesBtn?.addEventListener("click", () => {
   }
 });
 
-document.querySelectorAll(".char-card").forEach((card) => {
+document.querySelectorAll("#char-selection .char-card").forEach((card) => {
   card.addEventListener("click", async () => {
-    const chosenClass = card.getAttribute("data-class");
+    selectedPlayerClass = card.getAttribute("data-class") || "Warrior";
 
-    // Character selection -> loading screen
     charSelection.classList.add("hidden");
+    enemySelection?.classList.remove("hidden");
+  });
+});
+
+document.querySelectorAll("#enemy-selection .char-card").forEach((card) => {
+  card.addEventListener("click", async () => {
+    const chosenEnemyClass = card.getAttribute("data-class") || "Minion";
+
+    // Enemy selection -> loading screen
+    enemySelection?.classList.add("hidden");
     loadingPage?.classList.remove("hidden");
 
     // Show board under loading overlay while data initializes
     gameContainer.classList.remove("hidden");
 
-    await init(chosenClass);
+    await init(selectedPlayerClass, chosenEnemyClass);
 
     loadingPage?.classList.add("hidden");
   });
@@ -263,8 +197,6 @@ const resetPlayerHand = () => {
   playerCards.forEach((card) => {
     card.remove();
   });
-
-  console.log("Player cards cleared!"); // TBD
 };
 
 const resetEnemyHand = () => {
@@ -277,8 +209,6 @@ const resetEnemyHand = () => {
   enemyCards.forEach((card) => {
     card.remove();
   });
-
-  console.log("Enemy cards cleared!");
 };
 
 const resetActiveZones = () => {
@@ -310,6 +240,7 @@ const resetToCoverPage = () => {
   isGameOver = true;
   coverPage?.classList.remove("hidden");
   charSelection?.classList.add("hidden");
+  enemySelection?.classList.add("hidden");
   loadingPage?.classList.add("hidden");
   gameContainer?.classList.add("hidden");
   rulesPanel?.classList.add("hidden");
@@ -323,17 +254,13 @@ const createDeck = () => {
     for (let j = 0; j < cardTypesQuantity[i]; j++) {
       let card = {
         type: cardTypes[i],
-        id: i,
+        id: cardUidCounter++,
         img: cardImages[i],
         text: cardDescriptions[i],
       };
       deck.push(card);
     }
   }
-  // for (let i = 0; i < deck.length; i++) {
-  //   deck[i].id = i;
-  // }
-
   deckCount.innerText = deck.length + " cards left";
 };
 
@@ -427,48 +354,7 @@ const loadEnemyData = (enemy) => {
   }
 };
 
-// Preload hand for testing purpose, CBD
-const cloneArray = (arr) => arr.map((c) => ({ ...c }));
-
-const preloadHandForTesting = (somePHandTest, someEHandTest, someTurn) => {
-  playerHand = cloneArray(somePHandTest); // for testing, TBD
-  enemyHand = cloneArray(someEHandTest); // for testing, TBD
-  if (someTurn === "Player") {
-    for (let i = 0; i < playerHand.length; i++) {
-      renderHandCard(playerHand[i]);
-    }
-    for (let j = 0; j < enemyHand.length; j++) {
-      renderEnemyHandCard(enemyHand[j]);
-    }
-  } else if (someTurn === "Enemy") {
-    for (let i = 0; i < enemyHand.length; i++) {
-      renderEnemyHandCard(enemyHand[i]);
-    }
-    for (let j = 0; j < playerHand.length; j++) {
-      renderHandCard(playerHand[j]);
-    }
-  }
-};
-
 // Render card on hand container according to hand array
-
-function renderHandCardCopy(cardData) {
-  const cardElement = document.createElement("div");
-
-  cardElement.className = "my card";
-
-  cardElement.setAttribute("data-id", cardData.id);
-
-  cardElement.innerHTML = `
-    <div class="card-content">
-      <h2>${cardData.type}</h2>
-    </div>
-  `;
-
-  const container = document.querySelector("#player-hand-container");
-  container.appendChild(cardElement);
-}
-
 function renderHandCard(cardData) {
   const cardElement = document.createElement("div");
 
@@ -495,7 +381,6 @@ function renderEnemyHandCard(cardData) {
 
   cardElement.setAttribute("data-id", cardData.id);
 
-  // to hide card type from player later, TBD
   cardElement.innerHTML = `
     <div class="card-content">
       <img src="${cardData.img}" class="card-icon" alt="${cardData.type}">
@@ -524,58 +409,18 @@ function enemyDraw() {
   deckCount.innerText = deck.length + " cards left";
 }
 
-const checkFirstTurnWithCardDealtCopy = async (player, enemy) => {
-  if (player.SPD >= enemy.SPD) {
-    turn = "Player";
-    updateDialogue(`Player is faster and will go first!`);
-    await delay(msgDelay);
-    updateDialogue("Dealing Hands...");
-    // the following is preload hand for testing purpose, TBD
-    preloadHandForTesting(playerHandTest, enemyHandTest, turn); // for testing, TBD
-    // the following is the actual code for dealing hand, to be restored after testing, TBD
-    // for (let i = 0; i < 3; i++) {
-    //   playerDraw();
-    //   await delay(shortDelay);
-    //   enemyDraw();
-    //   await delay(shortDelay);
-    // }
-    await delay(shortDelay);
-    playerTurn();
-  } else {
-    turn = "Enemy";
-    updateDialogue(`Enemy is faster and will go first!`);
-    await delay(msgDelay);
-    updateDialogue("Dealing Hands...");
-    // the following is preload hand for testing purpose, TBD
-    preloadHandForTesting(playerHandTest, enemyHandTest, turn); // for testing, TBD
-    // the following is the actual code for dealing hand, to be restored after testing, TBD
-    // for (let i = 0; i < 3; i++) {
-    //   enemyDraw();
-    //   await delay(shortDelay);
-    //   playerDraw();
-    //   await delay(shortDelay);
-    // }
-    await delay(shortDelay);
-    enemyTurn();
-  }
-  log(); //Deck content check only, TBD
-};
-
 const checkFirstTurnWithCardDealt = async (player, enemy) => {
   if (player.SPD >= enemy.SPD) {
     turn = "Player";
     updateDialogue(`Player is faster and will go first!`);
     await delay(msgDelay);
     updateDialogue("Dealing Hands...");
-    // the following is preload hand for testing purpose, TBD
-    preloadHandForTesting(playerHandTest, enemyHandTest, turn); // for testing, TBD
-    // the following is the actual code for dealing hand, to be restored after testing, TBD
-    // for (let i = 0; i < 3; i++) {
-    //   playerDraw();
-    //   await delay(shortDelay);
-    //   enemyDraw();
-    //   await delay(shortDelay);
-    // }
+    for (let i = 0; i < 3; i++) {
+      playerDraw();
+      await delay(shortDelay);
+      enemyDraw();
+      await delay(shortDelay);
+    }
     await delay(shortDelay);
     return turn;
   } else {
@@ -583,22 +428,18 @@ const checkFirstTurnWithCardDealt = async (player, enemy) => {
     updateDialogue(`Enemy is faster and will go first!`);
     await delay(msgDelay);
     updateDialogue("Dealing Hands...");
-    // the following is preload hand for testing purpose, TBD
-    preloadHandForTesting(playerHandTest, enemyHandTest, turn); // for testing, TBD
-    // the following is the actual code for dealing hand, to be restored after testing, TBD
-    // for (let i = 0; i < 3; i++) {
-    //   enemyDraw();
-    //   await delay(shortDelay);
-    //   playerDraw();
-    //   await delay(shortDelay);
-    // }
+    for (let i = 0; i < 3; i++) {
+      enemyDraw();
+      await delay(shortDelay);
+      playerDraw();
+      await delay(shortDelay);
+    }
     await delay(shortDelay);
     return turn;
   }
-  log(); //Deck content check only, TBD
 };
 
-const gameFlowManager = async (firstTurn, sessionId) => {
+const gameFlowManager = async (firstTurn, sessionId, countdown) => {
   while (
     player.HP > 0 &&
     enemy.HP > 0 &&
@@ -606,13 +447,13 @@ const gameFlowManager = async (firstTurn, sessionId) => {
     sessionId === gameSessionId
   ) {
     if (firstTurn === "Player") {
-      await playerTurn(sessionId);
+      await playerTurn(sessionId, countdown);
       if (sessionId !== gameSessionId || checkGameOver()) break;
       await enemyTurn(sessionId);
     } else {
       await enemyTurn(sessionId);
       if (sessionId !== gameSessionId || checkGameOver()) break;
-      await playerTurn(sessionId);
+      await playerTurn(sessionId, countdown);
     }
   }
 };
@@ -651,7 +492,7 @@ const updateDialogue = (message) => {
   document.querySelector("#dialogue-box").innerHTML = message;
 };
 
-// Pause function (currently used for dodged reaction only, can be used for future effect animation or card effect)
+// Pause function (currently used for dodged reaction only,
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Delay function
@@ -693,8 +534,7 @@ const waitForClick = (element) => {
       // Use .closest to see if a .card (or something inside it) was clicked
       const card = event.target.closest(".card");
       if (!card) return; // If they didn't click on a card, ignore the click
-      // for console, to be removed after testing
-      console.log(`You clicked: ${card.innerText}`);
+      if (card.dataset.id === undefined) return;
       if (card) {
         event.stopPropagation();
         // 1. Clean up: Remove the listener so it doesn't stay active forever
@@ -769,8 +609,8 @@ const waitForReaction = (timeoutMs) => {
   });
 };
 
-const playerTurnCountDown = async function (sessionId) {
-  let turnTime = 20; // 20 seconds to move
+const playerTurnCountDown = async function (sessionId, countdown) {
+  let turnTime = countdown; // 20 seconds to move
 
   const endBtn = renderEndTurnButton(); // Create the button and store it in a variable
 
@@ -939,20 +779,21 @@ const resolveCardEffect = async (card) => {
   }
 };
 
+const syncPoisonFaceVisuals = () => {
+  playerFaceEl?.classList.toggle("poisoned-face", isPlayerPoisoned);
+  enemyFaceEl?.classList.toggle("poisoned-face", isEnemyPoisoned);
+};
+
 const renderEndTurnButton = () => {
-  // 1. Clean up: Remove old button if it exists so we don't get duplicates
+  // Remove any duplicates button
   document.querySelector("#end-turn-button")?.remove();
 
   const btn = document.createElement("button");
   btn.id = "end-turn-button";
   btn.innerText = "End Turn";
   btn.className = "control-btn"; // Add a class for your CSS styling
-  // btn.style.display = "flex";
-  // btn.style.flexDirection = "column";
-  // btn.style.justifyContent = "center";
-  // btn.style.alignItems = "center";
 
-  // 2. Append to the specific play area
+  // Append onto player active zone
   const playArea = document.querySelector(".active-player"); // Change this selector to target the correct area
   if (playArea) {
     // If the play area exists, append the button to it
@@ -1011,7 +852,7 @@ const dodgedCardOntoActiveZone = (cardData, turn) => {
 };
 
 // Initializing Game
-const init = async (chosenClass = "Warrior") => {
+const init = async (chosenClass, chosenEnemyClass = "Minion") => {
   const mySessionId = ++gameSessionId;
 
   updateDialogue("Initializing Data...");
@@ -1028,10 +869,10 @@ const init = async (chosenClass = "Warrior") => {
   isPlayerPoisoned = false;
   isEnemyPoisoned = false;
   wantToStopPoison = false;
+  cardUidCounter = 0;
   if (chosenClass === "Warrior") {
     player = new Warrior();
   } else if (chosenClass === "Mage") {
-    // Fallback until additional character classes are implemented
     player = new Mage();
   } else if (chosenClass === "Ninja") {
     player = new Ninja();
@@ -1040,7 +881,12 @@ const init = async (chosenClass = "Warrior") => {
   } else {
     player = new Minion();
   }
-  enemy = new DemonKing();
+
+  if (chosenEnemyClass === "Demon-King") {
+    enemy = new DemonKing();
+  } else {
+    enemy = new Minion();
+  }
   document.querySelector("#end-turn-button")?.remove();
   document.querySelector("#reset-button")?.remove();
   // the following clear HTML elements
@@ -1071,40 +917,26 @@ const init = async (chosenClass = "Warrior") => {
   const firstTurn = await checkFirstTurnWithCardDealt(player, enemy);
   if (mySessionId !== gameSessionId) return;
 
-  gameFlowManager(firstTurn, mySessionId);
+  gameFlowManager(firstTurn, mySessionId, countdownTime);
 };
 
-const playerTurn = async function (sessionId) {
+const playerTurn = async function (sessionId, countdown) {
   if (sessionId !== gameSessionId || isGameOver) return;
 
-  console.log(`Turn Start: ${turn}`);
   // Visually indicate turn change by borders
   turnIndicator();
   // Draw 1 card at start of turn
   if (deck.length !== 0) {
     playerDraw();
-    console.log("check player hand: ", playerHand); // for test, TBD
   } else {
-    console.log("Deck is empty, cannot draw more cards. Game Ended");
     updateDialogue("Deck is empty, cannot draw more cards. Game Ended");
     isGameOver = true;
     renderResetButton();
     return; // Exit the function if the deck is empty
   }
 
-  // if (isPlayerPoisoned) {
-  //   await delay(flowDelay);
-  //   player.poison();
-  //   loadPlayerData(player);
-  //   updateDialogue(
-  //     "You take 2 damage due to poison! Use Heal to remove the poison effect!",
-  //   );
-  //   await delay(msgDelay);
-  // }
   updateDialogue("You draw 1 card...");
   await delay(flowDelay);
-  console.log("Your move please");
-
   // Check if turn is ended or timeout
   let isTurnOver = false;
   // Check if only one attack or critical card can be played per turn
@@ -1130,7 +962,7 @@ const playerTurn = async function (sessionId) {
     if (checkGameOver()) return;
 
     // This gives string such as "END_TURN_CLICKED", "TIMEOUT", or the clicked card element
-    const outcome = await playerTurnCountDown(sessionId);
+    const outcome = await playerTurnCountDown(sessionId, countdown);
 
     if (sessionId !== gameSessionId || isGameOver) return;
     if (checkGameOver()) return;
@@ -1145,6 +977,13 @@ const playerTurn = async function (sessionId) {
       // 1. Define cardData here so the rest of the function can see it
       // outcome is the clicked <div>, we use its dataset.id to find the object
       const cardData = playerHand.find((c) => c.id == outcome);
+      if (!cardData) {
+        updateDialogue(
+          "Selected card is no longer available. Please pick again.",
+        );
+        await delay(flowDelay);
+        continue;
+      }
       const cardIndex = playerHand.findIndex((c) => c.id == cardData.id);
 
       // 2. The Restriction Check before playing a card
@@ -1202,7 +1041,6 @@ const playerTurn = async function (sessionId) {
       // Then enforce the boolean switch for attack and critical cards
       // for the 1 card limitation
       updateDialogue(`You played ${cardData.type}!`);
-      console.log(`What is cardData? ${cardData}!`); // for test, TBD
       await delay(flowDelay);
       await resolveCardEffect(cardData);
       await delay(flowDelay);
@@ -1218,20 +1056,16 @@ const playerTurn = async function (sessionId) {
 
       if (cardData.type === "ATTACK") {
         isAttackCardPlayed = true;
-        console.log("Attack switch flipped to TRUE"); // for test, TBD
       }
       if (cardData.type === "CRITICAL") {
         isCriticalCardPlayed = true;
-        console.log("Critical switch flipped to TRUE"); // for test, TBD
       }
       if (cardData.type === "BOMB") {
         isBombCardPlayed = true;
-        console.log("BOMB switch flipped to TRUE"); // for test, TBD
       }
       if (cardData.type === "HEAL") {
         if (isPlayerPoisoned) {
           loadPlayerData(player);
-          console.log("Player is no longer poisoned"); // for test, TBD
           updateDialogue(`You are no longer poisoned!`);
           await delay(msgDelay);
         }
@@ -1239,11 +1073,6 @@ const playerTurn = async function (sessionId) {
         syncPoisonFaceVisuals();
         loadPlayerData(player);
       }
-      // if (cardData.type === "POISON" && !isPlayerPoisoned) {
-      //   isPlayerPoisoned = true;
-      //   document.querySelector(".player-face").style.background = "red";
-      //   console.log("Player is now poisoned"); // for test, TBD
-      // }
     }
   }
   // End Phase, move objects from active zone array to discard pile array with discard pile count
@@ -1251,8 +1080,6 @@ const playerTurn = async function (sessionId) {
   for (const card of playerActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile); //TBD
-    console.log(`Discard Count: ${discardCount}`); //TBD
     if (discardCount > 0) {
       discardEl.classList.add("card-back-hidden");
     }
@@ -1263,8 +1090,6 @@ const playerTurn = async function (sessionId) {
   for (const card of enemyActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile); //TBD
-    console.log(`Discard Count: ${discardCount}`); //TBD
     if (discardCount > 0) {
       discardEl.classList.add("card-back-hidden");
     }
@@ -1277,7 +1102,6 @@ const playerTurn = async function (sessionId) {
   document.querySelector(".active-enemy").innerHTML = "";
 
   // End Phase, Switch to Enemy
-  console.log("Player turn ended, moving to Enemy ..."); // for test, TBD
   updateDialogue("Player turn ended, moving to Enemy ...");
   await delay(2000);
   turn = "Enemy";
@@ -1287,30 +1111,16 @@ const playerTurn = async function (sessionId) {
 const enemyTurn = async function (sessionId) {
   if (sessionId !== gameSessionId || isGameOver) return;
 
-  console.log(`Turn Start: ${turn}`);
-
   turnIndicator();
   // Draw 1 card at start of turn
   if (deck.length !== 0) {
     enemyDraw();
-    console.log("check enemy hand: ", enemyHand); // for test, TBD
   } else {
-    console.log("Deck is empty, cannot draw more cards. Game Ended");
     updateDialogue("Deck is empty, cannot draw more cards. Game Ended");
     isGameOver = true;
     renderResetButton();
     return; // Exit the function if the deck is empty
   }
-
-  // if (isEnemyPoisoned) {
-  //   await delay(flowDelay);
-  //   enemy.poison();
-  //   loadEnemyData(enemy);
-  //   updateDialogue(
-  //     "Enemy takes 2 damage due to poison! Use Heal to remove the poison effect!",
-  //   );
-  //   await delay(msgDelay);
-  // }
 
   updateDialogue("Your Enemy draw 1 card...");
   await delay(flowDelay);
@@ -1324,11 +1134,6 @@ const enemyTurn = async function (sessionId) {
   let isBombCardPlayed = false;
   let wantToStopHeal = enemy.HP >= enemy.maxHP ? true : false;
   let poisonDamageThisTurn = false;
-  console.log(
-    "Does Enemy want to stop Heal at the beginning of turn?: ",
-    wantToStopHeal,
-  ); // for test, TBD
-
   // AI logic with for loop
   for (let i = 0; i < enemyHand.length; ) {
     if (sessionId !== gameSessionId || isGameOver) return;
@@ -1343,22 +1148,10 @@ const enemyTurn = async function (sessionId) {
       await delay(msgDelay);
       poisonDamageThisTurn = true;
     } else {
-      console.log("No poison damage this turn or already took poison damage."); //TBD
     }
-    console.log("Check poisonDamageThisTurn flag: ", poisonDamageThisTurn); // for test, TBD
-    console.log(
-      "Is enemy poisoned at the start of the loop? ",
-      isEnemyPoisoned,
-    ); // for test, TBD
     if (checkGameOver()) return;
 
     const cardData = enemyHand[i];
-    // below console log for check, TBD
-    console.log("Card Type Detected:", cardData.type);
-    console.log("Card ID is:", cardData.id);
-    console.log("Is Attack already played?:", isAttackCardPlayed);
-    console.log("Is Critical already played?:", isCriticalCardPlayed);
-    console.log("Does Enemy want to stop Heal?:", wantToStopHeal);
 
     // Validation: during loop, if card is not valid for play, i++ to move to next
     if (enemy.HP < enemy.maxHP) wantToStopHeal = false;
@@ -1394,17 +1187,11 @@ const enemyTurn = async function (sessionId) {
     const cardElement = document.querySelector(`[data-id="${cardData.id}"]`);
     if (cardElement) {
       cardOntoActiveZone(cardElement, turn);
-      console.log(
-        `Card: ${cardData.type} , ID: ${cardData.id} placed on active zone`,
-      );
     } else {
       console.warn("Card element not found for active zone placement!");
     }
 
     // Remove from hand and DO NOT increment i (next card shifts into current index)
-    // enemyHand.splice(i, 1);
-    // console.log(`Enemy hand after playing card: ${enemyHand}`);
-
     if (i !== -1) {
       const movedCard = enemyHand.splice(i, 1)[0];
       enemyActiveZone.push(movedCard);
@@ -1432,7 +1219,6 @@ const enemyTurn = async function (sessionId) {
 
     if (cardData.type === "HEAL") {
       if (isEnemyPoisoned) {
-        console.log("Enemy is no longer poisoned"); // for test, TBD
         updateDialogue(`Enemy is no longer poisoned!`);
         await delay(msgDelay);
       }
@@ -1451,8 +1237,6 @@ const enemyTurn = async function (sessionId) {
   for (const card of enemyActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile); // TBD
-    console.log(`Discard Count: ${discardCount}`); //TBD
     if (discardCount > 0) {
       discardEl.classList.add("card-back-hidden");
     }
@@ -1463,13 +1247,10 @@ const enemyTurn = async function (sessionId) {
   for (const card of playerActiveZone) {
     discardPile.push(card);
     discardCount++;
-    console.log("Discard Pile: ", discardPile); // TBD
-    console.log(`Discard Count: ${discardCount}`); //TBD
     if (discardCount > 0) {
       discardEl.classList.add("card-back-hidden");
     }
     discardCountEl.innerHTML = `Discarded: ${discardCount}`;
-    `Discard Pile: ${discardCount}`;
   }
 
   // to confirm if enemy active zone array is empty
@@ -1479,7 +1260,6 @@ const enemyTurn = async function (sessionId) {
   document.querySelector(".active-enemy").innerHTML = "";
 
   await delay(flowDelay);
-  console.log("Enemy turn ended, moving to Player...");
   updateDialogue("Enemy turn ended, moving to Player...");
   await delay(msgDelay);
   turn = "Player";
@@ -1510,19 +1290,3 @@ const checkGameOver = () => {
 
   return false;
 };
-
-//---------------------main code--------------------------------
-
-//------------------console log check--------------------------------
-
-function log() {
-  // Checking Shuffled Deck, to be removed after testing
-  console.log(deck.length);
-  console.log(deck);
-
-  // Checking Player/Enemy Hand Creation, to be removed after testing
-  console.log(playerHand.length);
-  console.log(enemyHand.length);
-  console.log(playerHand);
-  console.log(enemyHand);
-}

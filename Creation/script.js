@@ -52,12 +52,14 @@ const startBtn = document.querySelector("#start-game-btn");
 const toggleRulesBtn = document.querySelector("#toggle-rules-btn");
 const coverPage = document.querySelector("#cover-page");
 const charSelection = document.querySelector("#char-selection");
+const enemySelection = document.querySelector("#enemy-selection");
 const gameContainer = document.querySelector("#game-container");
 const loadingPage = document.querySelector("#loading-page");
 const rulesPanel = document.querySelector("#rules-panel");
 
 const playerFaceEl = document.querySelector(".player-face");
 const enemyFaceEl = document.querySelector(".enemy-face");
+let selectedPlayerClass = "Warrior";
 
 const syncPoisonFaceVisuals = () => {
   playerFaceEl?.classList.toggle("poisoned-face", isPlayerPoisoned);
@@ -237,16 +239,28 @@ toggleRulesBtn?.addEventListener("click", () => {
 
 document.querySelectorAll(".char-card").forEach((card) => {
   card.addEventListener("click", async () => {
-    const chosenClass = card.getAttribute("data-class");
+    if (card.classList.contains("enemy-card")) return;
 
-    // Character selection -> loading screen
+    const chosenClass = card.getAttribute("data-class");
+    selectedPlayerClass = chosenClass || "Warrior";
+
     charSelection.classList.add("hidden");
+    enemySelection?.classList.remove("hidden");
+  });
+});
+
+document.querySelectorAll(".enemy-card").forEach((card) => {
+  card.addEventListener("click", async () => {
+    const chosenEnemy = card.getAttribute("data-enemy") || "Demon-King";
+
+    // Enemy selection -> loading screen
+    enemySelection?.classList.add("hidden");
     loadingPage?.classList.remove("hidden");
 
     // Show board under loading overlay while data initializes
     gameContainer.classList.remove("hidden");
 
-    await init(chosenClass);
+    await init(selectedPlayerClass, chosenEnemy);
 
     loadingPage?.classList.add("hidden");
   });
@@ -310,6 +324,7 @@ const resetToCoverPage = () => {
   isGameOver = true;
   coverPage?.classList.remove("hidden");
   charSelection?.classList.add("hidden");
+  enemySelection?.classList.add("hidden");
   loadingPage?.classList.add("hidden");
   gameContainer?.classList.add("hidden");
   rulesPanel?.classList.add("hidden");
@@ -1011,7 +1026,10 @@ const dodgedCardOntoActiveZone = (cardData, turn) => {
 };
 
 // Initializing Game
-const init = async (chosenClass = "Warrior") => {
+const init = async (
+  chosenClass = "Warrior",
+  chosenEnemyClass = "Demon-King",
+) => {
   const mySessionId = ++gameSessionId;
 
   updateDialogue("Initializing Data...");
@@ -1040,7 +1058,12 @@ const init = async (chosenClass = "Warrior") => {
   } else {
     player = new Minion();
   }
-  enemy = new DemonKing();
+
+  if (chosenEnemyClass === "Minion") {
+    enemy = new Minion();
+  } else {
+    enemy = new DemonKing();
+  }
   document.querySelector("#end-turn-button")?.remove();
   document.querySelector("#reset-button")?.remove();
   // the following clear HTML elements

@@ -32,7 +32,6 @@ body {
   /* background-color: rgb(43, 153, 226); */
   background: radial-gradient(circle, orangered 0%, #000 100%);
   color: gold;
-  font-family: "Press Start 2P", cursive; /* A classic pixel font */
 }
 
 .pixel-btn {
@@ -118,13 +117,21 @@ body {
   z-index: 1200;
 }
 
+#enemy-selection {
+  z-index: 1200;
+}
+
+.enemy-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 #loading-page {
   z-index: 1300;
   background: radial-gradient(circle, green 0%, #05070d 100%);
 }
 /* ---------------------------------------------------------------------------------- */
 .game-container {
-  perspective: 1200px; /* Adds depth for 3D effects */
+  perspective: 1200px;
   width: 1000px;
   max-width: 1200px;
   height: 900px;
@@ -158,7 +165,7 @@ body {
 
 .middle-row {
   display: flex;
-  flex: 1; /* Takes up remaining middle space */
+  flex: 1;
   gap: 15px;
   margin-top: -40px;
 }
@@ -235,9 +242,7 @@ body {
   color: black;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Clips anything that tries to escape */
-  /* flex-basis: 110px; */
-  /* margin-right: 5 px; */
+  overflow: hidden;
 }
 
 .card-back {
@@ -254,7 +259,7 @@ body {
 /* Styling the text inside the card */
 .card-content h2 {
   margin: 5px 0;
-  color: #b71c1c; /* Dark red for the card name */
+  color: red;
   text-decoration: underline;
   flex-shrink: 0; /* Keeps the title height consistent */
 }
@@ -271,7 +276,6 @@ body {
 
 .card-back-hidden {
   background-image: url("images/card-back.jpg");
-  /* background-image: url("images/card-back-template.jpg"); */
   background-size: cover;
   background-position: center;
   border-color: #555;
@@ -301,19 +305,13 @@ body {
 #enemy-hand-container {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* keep face and cards on the left */
+  justify-content: flex-start;
   gap: 10px;
-  height: 140px; /* Set this lower than your --card-height */
-  max-height: 140px; /* Forces the height to NEVER grow */
+  height: 140px;
+  max-height: 140px;
   overflow: visible; /* Allows cards to overflow outside the hand container */
   padding: 0 10px;
 }
-
-/* #player-hand-container:empty::before {
-  content: "No cards in hand. Draw to start!";
-  color: rgba(255, 255, 255, 0.3);
-  font-style: italic;
-} */
 
 /* this is extra idea of making the board 3D. */
 .middle-row,
@@ -328,15 +326,15 @@ body {
 
 #enemy-hand-container {
   transform: rotateX(20deg) scale(0.9) translateY(10px);
-  opacity: 0.9; /* Further away things are often slightly dimmer */
+  opacity: 0.9;
 }
 
 #player-hand-container {
   transform: rotateX(20deg) scale(1.15) translateY(-10px);
-  z-index: 10; /* Ensures your hand is always 'on top' visually */
+  z-index: 10;
 }
 
-/* Give your cards that 'Pop' when they are in the hand */
+/* Card Visuals */
 .card {
   transition:
     transform 0.3s ease,
@@ -345,18 +343,17 @@ body {
 }
 
 .card:hover {
-  /* This makes the card stand up straight when you hover over it */
   transform: rotateX(-5deg) translateZ(20px) scale(1.1);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
   z-index: 100;
 }
 
 .card-icon {
-  width: 80%; /* Scales the image to fit the card */
-  height: auto; /* Maintains aspect ratio */
+  width: 80%;
+  height: auto;
   border-radius: 4px;
-  pointer-events: none; /* Prevents the image from blocking clicks on the card */
-  flex-shrink: 0; /* Tells the image: "Do not shrink to make room for text" */
+  pointer-events: none; /* Prevents the image blocking clicks*/
+  flex-shrink: 0;
   height: 80px;
 }
 
@@ -381,13 +378,17 @@ button {
 }
 
 .active-player {
-  z-index: 10; /* Ensures it sits on top of everything else */
-  /* display: flex;
-  flex-direction: row; */
+  z-index: 10;
 }
 
 .active-enemy {
-  z-index: 10; /* Ensures it sits on top of everything else */
-  /* display: flex;
-  flex-direction: row; */
+  z-index: 10;
+}
+
+.game-title {
+  font-size: 4em;
+}
+
+h2 {
+  font-size: 1.8em;
 }
