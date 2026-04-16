@@ -6,7 +6,7 @@ const cardDescriptions = [
   "Avoid ATTACK",
   "+ 3 HP, Heal Poison",
   "Can't dodge, Deal SPD damage",
-  "Deal 1-5 damage to all players",
+  "Deal 1-10 damage to all players",
   "Deal 2 damage at every start of turn",
 ];
 const cardImages = [
@@ -20,7 +20,7 @@ const cardImages = [
 
 const cardTypesQuantity = [5, 5, 4, 2, 2, 2];
 
-// Below is the delay time in ms
+// Below is the delay time in ms, reduce if flow is slow
 const msgDelay = 2500;
 const flowDelay = 1500;
 const shortDelay = 500;
@@ -28,8 +28,8 @@ const shortDelay = 500;
 // Below controls countdown time during player turn`in seconds
 const countdownTime = 10;
 
-let playerHand = [];
-let enemyHand = [];
+let playerHandCards = [];
+let enemyHandCards = [];
 let playerActiveZone = [];
 let enemyActiveZone = [];
 let discardPile = [];
@@ -44,6 +44,7 @@ let isEnemyPoisoned = false;
 let wantToStopPoison = false;
 let gameSessionId = 0;
 let cardUidCounter = 0;
+let selectedPlayerClass = "Warrior";
 
 const dialogue = document.querySelector("#dialogue-box");
 const playerText = document.querySelector(".player-text");
@@ -63,8 +64,6 @@ const rulesPanel = document.querySelector("#rules-panel");
 
 const playerFaceEl = document.querySelector(".player-face");
 const enemyFaceEl = document.querySelector(".enemy-face");
-
-let selectedPlayerClass = "Warrior";
 
 // ------------------------Classes---------------------------------
 
@@ -92,9 +91,10 @@ const Character = class {
   }
 
   bomb() {
-    const amount = Math.floor(Math.random() * 5) + 1; // Random damage between 1 and 5
+    const amount = Math.floor(Math.random() * 10) + 1;
 
     this.HP -= amount;
+    if (this.HP < 0) this.HP = 0;
     return amount;
   }
 
@@ -397,14 +397,14 @@ function renderEnemyHandCard(cardData) {
 
 function playerDraw() {
   const drawnCard = deck.pop();
-  playerHand.push(drawnCard);
+  playerHandCards.push(drawnCard);
   renderHandCard(drawnCard);
   deckCount.innerText = deck.length + " cards left";
 }
 
 function enemyDraw() {
   const drawnCard = deck.pop();
-  enemyHand.push(drawnCard);
+  enemyHandCards.push(drawnCard);
   renderEnemyHandCard(drawnCard);
   deckCount.innerText = deck.length + " cards left";
 }
@@ -481,8 +481,6 @@ const turnIndicator = () => {
     document.querySelector(".zone.enemy").style.border = "5px solid yellow";
     document.querySelector(".zone.player").style.fontWeight = "400";
     document.querySelector(".zone.enemy").style.fontWeight = "bold";
-  } else {
-    console.warn("Invalid turn value! Check your turn logic.");
   }
 };
 
@@ -556,10 +554,10 @@ const waitForReaction = (timeoutMs) => {
     let timeLeft = timeoutMs / 1000;
     const playerHandUI = document.querySelector("#player-hand-container");
 
-    // 1. Select ALL cards in hand
+    // Select ALL cards in hand
     const allCardsUI = Array.from(playerHandUI.querySelectorAll(".card"));
 
-    // 2. Filter for ALL Missed cards
+    // Filter for ALL Missed cards
     const dodgedCardsUI = allCardsUI.filter((el) =>
       el.innerText.includes("DODGED"),
     );
@@ -597,7 +595,7 @@ const waitForReaction = (timeoutMs) => {
       });
     };
 
-    // 3. Attach the listener to EVERY dodged card
+    // Attach the listener to EVERY dodged card
     dodgedCardsUI.forEach((card) => {
       card.addEventListener("click", onClick);
     });
@@ -660,8 +658,10 @@ const resolveCardEffect = async (card) => {
         await pause(msgDelay);
 
         // Enemy DODGED card check
-        const dodgedIndex = enemyHand.findIndex((c) => c.type === "DODGED");
-        const cardData = enemyHand[dodgedIndex];
+        const dodgedIndex = enemyHandCards.findIndex(
+          (c) => c.type === "DODGED",
+        );
+        const cardData = enemyHandCards[dodgedIndex];
         if (dodgedIndex !== -1) {
           //Append card from enemy hand to active zone
           const dodgedCardElement = document.querySelector(
@@ -669,11 +669,11 @@ const resolveCardEffect = async (card) => {
           );
           dodgedCardOntoActiveZone(dodgedCardElement, turn);
           // Enemy avoids the damage
-          const dodgedCard = enemyHand[dodgedIndex];
+          const dodgedCard = enemyHandCards[dodgedIndex];
           updateDialogue(`Enemy played DODGED! Your attack was blocked.`);
-          const movedCard = enemyHand.splice(dodgedIndex, 1)[0];
+          const movedCard = enemyHandCards.splice(dodgedIndex, 1)[0];
           enemyActiveZone.push(movedCard);
-          await delay(3000);
+          await delay(msgDelay);
         } else {
           // No reaction, proceed with damage
           enemy.attack(player.ATK);
@@ -681,7 +681,7 @@ const resolveCardEffect = async (card) => {
           updateDialogue(
             `No DODGED!! You attacked the enemy for ${player.ATK} damage!`,
           );
-          await delay(3000);
+          await delay(msgDelay);
         }
       } else {
         // Enemy Attacking Player logic, add player reaction for DODGED card
@@ -692,36 +692,30 @@ const resolveCardEffect = async (card) => {
 
         if (toPlayDodged && toPlayDodged.status === "DODGED_PLAYED") {
           // Use the specific ID from the click to remove the correct card
-          const index = playerHand.findIndex(
+          const index = playerHandCards.findIndex(
             (c) => c.id == toPlayDodged.cardId,
           );
-          const cardData = playerHand[index];
+          const cardData = playerHandCards[index];
           const cardElement = document.querySelector(
             `[data-id="${cardData.id}"]`,
           );
           dodgedCardOntoActiveZone(cardElement, turn);
           // Remove from player hand array
           if (index !== -1) {
-            const movedCard = playerHand.splice(index, 1)[0];
+            const movedCard = playerHandCards.splice(index, 1)[0];
             playerActiveZone.push(movedCard);
           }
-          // Remove card from player hand and put onto active zone
-          // renderPlayerHand();
 
           updateDialogue("You played DODGED! Damage avoided.");
         } else {
           player.attack(enemy.ATK);
           loadPlayerData(player);
           updateDialogue(`The enemy hit you for ${enemy.ATK} damage!`);
-          await delay(3000);
+          await delay(msgDelay);
         }
 
         break;
       }
-    case "DODGED":
-      // Implement dodged logic
-      // No need to do anything here if reaction is handled in the attack case
-      break;
     case "HEAL":
       // Implement heal logic
       if (turn.includes("Player")) {
@@ -832,8 +826,6 @@ const cardOntoActiveZone = (cardData, turn) => {
     activeZone.appendChild(cardData);
     cardData.className =
       turn === "Player" ? "card player-active-card" : "card enemy-active-card";
-  } else {
-    console.warn("Active zone or card not found! Check your HTML structure.");
   }
 };
 
@@ -858,8 +850,8 @@ const init = async (chosenClass, chosenEnemyClass = "Minion") => {
   updateDialogue("Initializing Data...");
   // the following initialize JS variables
   deck = [];
-  playerHand = [];
-  enemyHand = [];
+  playerHandCards = [];
+  enemyHandCards = [];
   playerActiveZone = [];
   enemyActiveZone = [];
   discardPile = [];
@@ -894,24 +886,24 @@ const init = async (chosenClass, chosenEnemyClass = "Minion") => {
   resetEnemyHand();
   resetActiveZones();
   resetHTMLDOM();
-  await delay(2000);
+  await delay(flowDelay);
   if (mySessionId !== gameSessionId) return;
   updateDialogue("Loading Character Data...");
-  await delay(2000);
+  await delay(flowDelay);
   if (mySessionId !== gameSessionId) return;
   loadPlayerData(player);
   loadEnemyData(enemy);
-  await delay(2000);
+  await delay(flowDelay);
   if (mySessionId !== gameSessionId) return;
 
   updateDialogue("Creating Deck...");
   createDeck();
-  await delay(2000);
+  await delay(flowDelay);
   if (mySessionId !== gameSessionId) return;
 
   updateDialogue("Shuffling Deck...");
   shuffleDeck(deck);
-  await delay(2000);
+  await delay(flowDelay);
   if (mySessionId !== gameSessionId) return;
 
   const firstTurn = await checkFirstTurnWithCardDealt(player, enemy);
@@ -976,7 +968,7 @@ const playerTurn = async function (sessionId, countdown) {
     } else {
       // 1. Define cardData here so the rest of the function can see it
       // outcome is the clicked <div>, we use its dataset.id to find the object
-      const cardData = playerHand.find((c) => c.id == outcome);
+      const cardData = playerHandCards.find((c) => c.id == outcome);
       if (!cardData) {
         updateDialogue(
           "Selected card is no longer available. Please pick again.",
@@ -984,7 +976,7 @@ const playerTurn = async function (sessionId, countdown) {
         await delay(flowDelay);
         continue;
       }
-      const cardIndex = playerHand.findIndex((c) => c.id == cardData.id);
+      const cardIndex = playerHandCards.findIndex((c) => c.id == cardData.id);
 
       // 2. The Restriction Check before playing a card
       // NEW VALIDATION GATE
@@ -1008,7 +1000,7 @@ const playerTurn = async function (sessionId, countdown) {
       if (cardData.type === "BOMB" && isBombCardPlayed) {
         updateDialogue("Limit reached: Only 1 BOMB per turn!");
         await delay(flowDelay);
-        continue; // Restart the loop so player can pick a different card
+        continue;
       }
       if (isPlayerPoisoned && !poisonDamageThisTurn) {
         player.poison();
@@ -1017,19 +1009,18 @@ const playerTurn = async function (sessionId, countdown) {
           "You take 2 damage due to poison! Use Heal to remove the poison effect!",
         );
         await delay(msgDelay);
-        // return (poisonDamageThisTurn = true);
       }
 
-      // 4. Remove the card from hand and place on active zone
+      // Remove the card from hand and place on active zone
       const cardElement = document.querySelector(`[data-id="${cardData.id}"]`);
 
       if (cardElement) {
         cardOntoActiveZone(cardElement, turn);
       }
 
-      // Improvement, move card from hand array to active zone array
+      // Move card from hand array to active zone array
       if (cardIndex !== -1) {
-        const movedCard = playerHand.splice(cardIndex, 1)[0];
+        const movedCard = playerHandCards.splice(cardIndex, 1)[0];
         playerActiveZone.push(movedCard);
       } else {
         console.warn(
@@ -1103,7 +1094,7 @@ const playerTurn = async function (sessionId, countdown) {
 
   // End Phase, Switch to Enemy
   updateDialogue("Player turn ended, moving to Enemy ...");
-  await delay(2000);
+  await delay(flowDelay);
   turn = "Enemy";
   updateDialogue(`It is ${turn}'s turn.`);
 };
@@ -1135,7 +1126,7 @@ const enemyTurn = async function (sessionId) {
   let wantToStopHeal = enemy.HP >= enemy.maxHP ? true : false;
   let poisonDamageThisTurn = false;
   // AI logic with for loop
-  for (let i = 0; i < enemyHand.length; ) {
+  for (let i = 0; i < enemyHandCards.length; ) {
     if (sessionId !== gameSessionId || isGameOver) return;
 
     // Check poison effect at the start of the loop
@@ -1151,7 +1142,7 @@ const enemyTurn = async function (sessionId) {
     }
     if (checkGameOver()) return;
 
-    const cardData = enemyHand[i];
+    const cardData = enemyHandCards[i];
 
     // Validation: during loop, if card is not valid for play, i++ to move to next
     if (enemy.HP < enemy.maxHP) wantToStopHeal = false;
@@ -1187,13 +1178,11 @@ const enemyTurn = async function (sessionId) {
     const cardElement = document.querySelector(`[data-id="${cardData.id}"]`);
     if (cardElement) {
       cardOntoActiveZone(cardElement, turn);
-    } else {
-      console.warn("Card element not found for active zone placement!");
     }
 
     // Remove from hand and DO NOT increment i (next card shifts into current index)
     if (i !== -1) {
-      const movedCard = enemyHand.splice(i, 1)[0];
+      const movedCard = enemyHandCards.splice(i, 1)[0];
       enemyActiveZone.push(movedCard);
     } else {
       console.warn("Card not found in enemy hand array or index is invalid.");

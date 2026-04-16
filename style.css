@@ -392,9 +392,9 @@ button {
 
 .game-title img {
   display: block;
-  width: 750px;
+  width: 1100px;
   height: auto;
-  margin: 0 auto;
+  margin: 50px auto;
 }
 
 h2 {
