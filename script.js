@@ -26,7 +26,7 @@ const flowDelay = 1500;
 const shortDelay = 500;
 
 // Below controls countdown time during player turn`in seconds
-const countdownTime = 10;
+const countdownTime = 20;
 
 let playerHandCards = [];
 let enemyHandCards = [];
