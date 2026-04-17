@@ -18,7 +18,7 @@ const cardImages = [
   "images/POISON-ICON.jpg",
 ];
 
-const cardTypesQuantity = [5, 5, 4, 2, 2, 2];
+const cardTypesQuantity = [6, 4, 3, 3, 3, 3];
 
 // Below is the delay time in ms, reduce if flow is slow
 const msgDelay = 2500;
@@ -173,16 +173,11 @@ document.querySelectorAll("#enemy-selection .char-card").forEach((card) => {
   card.addEventListener("click", async () => {
     const chosenEnemyClass = card.getAttribute("data-class") || "Minion";
 
-    // Enemy selection -> loading screen
     enemySelection?.classList.add("hidden");
-    loadingPage?.classList.remove("hidden");
 
-    // Show board under loading overlay while data initializes
     gameContainer.classList.remove("hidden");
 
     await init(selectedPlayerClass, chosenEnemyClass);
-
-    loadingPage?.classList.add("hidden");
   });
 });
 
@@ -713,9 +708,8 @@ const resolveCardEffect = async (card) => {
           updateDialogue(`The enemy hit you for ${enemy.ATK} damage!`);
           await delay(msgDelay);
         }
-
-        break;
       }
+      break;
     case "HEAL":
       // Implement heal logic
       if (turn.includes("Player")) {

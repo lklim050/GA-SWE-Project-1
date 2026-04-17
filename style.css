@@ -126,10 +126,6 @@ body {
   grid-template-columns: repeat(2, 1fr);
 }
 
-#loading-page {
-  z-index: 1300;
-  background: radial-gradient(circle, green 0%, #05070d 100%);
-}
 /* ---------------------------------------------------------------------------------- */
 .game-container {
   perspective: 1200px;
